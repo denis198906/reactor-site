@@ -666,6 +666,14 @@ function buildHtml(){
 
 /* ---------- admin ---------- */
 var A=document.getElementById('admin'), tab='sections', open={}, statusMsg='', statusKind='';
+var artNs=null, artKnown=false;
+((window.claude&&typeof window.claude.use==='function')?window.claude.use('artifact'):Promise.resolve(null)).then(function(a){artNs=a;artKnown=true;if(!A.hidden)renderAdmin();},function(){artKnown=true;});
+function ghTarget(){
+ var m=/^([^.]+)\.github\.io$/i.exec(location.hostname); if(!m)return null;
+ var seg=location.pathname.split('/').filter(Boolean); var repo=seg.length?seg[0]:m[1]+'.github.io';
+ return {owner:m[1],repo:repo,branch:'main',path:'index.html'};
+}
+function ghToken(){try{return sessionStorage.getItem('sb-gh-token')||'';}catch(e){return '';}}
 function getPath(p){return p.split('.').reduce(function(o,k){return o==null?o:o[k];},state);}
 function setPath(p,v){var ks=p.split('.'),o=state;for(var i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks[ks.length-1]]=v;}
 function fld(path,label,kind,extra){
@@ -724,9 +732,11 @@ function renderAdmin(){
  A.innerHTML='<div class="ah"><b>Администрирование</b><select id="adm-lang" aria-label="Язык" style="font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink)">'+Object.keys(state.content).map(function(l){return '<option value="'+l+'"'+(l===lang?' selected':'')+'>'+esc(LANG_NAMES[l]||l)+'</option>';}).join('')+'</select><button class="ic" type="button" data-act="close-admin" aria-label="Закрыть">Закрыть</button></div>'+
   '<div class="tabs" role="tablist"><button role="tab" aria-selected="'+(tab==='sections')+'" data-tab="sections">Разделы</button><button role="tab" aria-selected="'+(tab==='images')+'" data-tab="images">Скриншоты</button><button role="tab" aria-selected="'+(tab==='style')+'" data-tab="style">Оформление</button></div>'+
   '<div class="abody">'+(tab==='sections'?tabSections():tab==='images'?tabImages():tabStyle())+'</div>'+
-  '<div class="af"><div class="st '+statusKind+'">'+esc(statusMsg||(dirty?'Есть несохранённые изменения. Они видны только вам, пока не опубликованы.':'Изменений нет.'))+'</div><div class="bt"><button class="btn btn-primary btn-sm" type="button" data-act="save"'+(dirty?'':' disabled')+'>Опубликовать</button><button class="btn btn-ghost btn-sm" type="button" data-act="discard"'+(dirty?'':' disabled')+'>Отменить изменения</button><a class="btn btn-ghost btn-sm" id="dl" href="#" download="stroykabuild-landing.html" hidden>Скачать HTML</a></div></div>';
+  '<div class="af"><div class="st '+statusKind+'">'+esc(statusMsg||(dirty?'Есть несохранённые изменения. Они видны только вам, пока не опубликованы.':'Изменений нет.'))+'</div>'+(function(){var gh=ghTarget(); if(artNs||!artKnown||!gh)return ''; return '<div class="fld"><span>Токен GitHub для публикации в '+esc(gh.owner+'/'+gh.repo)+'</span><input type="password" id="gh-token" autocomplete="off" placeholder="github_pat_…" value="'+esc(ghToken())+'"><span class="hint" style="font-weight:400">Fine‑grained token с правом Contents: Read and write только для этого репозитория. Хранится в этой вкладке до её закрытия и отправляется только на api.github.com.</span></div>';})()+
+  '<div class="bt"><button class="btn btn-primary btn-sm" type="button" data-act="save"'+(dirty?'':' disabled')+'>Опубликовать</button><button class="btn btn-ghost btn-sm" type="button" data-act="discard"'+(dirty?'':' disabled')+'>Отменить изменения</button><a class="btn btn-ghost btn-sm" id="dl" href="#" download="stroykabuild-landing.html" hidden>Скачать HTML</a></div></div>';
  bindDrop();
  var ls=document.getElementById('adm-lang'); if(ls)ls.addEventListener('change',function(){setLang(ls.value);});
+ var tk=document.getElementById('gh-token'); if(tk)tk.addEventListener('input',function(){try{sessionStorage.setItem('sb-gh-token',tk.value.trim());}catch(e){}});
 }
 function setStatus(m,k){statusMsg=m||'';statusKind=k||'';var el=A.querySelector('.st');if(el){el.textContent=m;el.className='st '+(k||'');}}
 function openAdmin(){A.hidden=false;renderAdmin();}
@@ -764,29 +774,53 @@ function addFiles(files){
 }
 
 /* save */
+function b64utf8(str){var bytes=new TextEncoder().encode(str),bin='',CH=0x8000;for(var i=0;i<bytes.length;i+=CH)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));return btoa(bin);}
+function saveGithub(html,gh,token){
+ var api='https://api.github.com/repos/'+gh.owner+'/'+gh.repo+'/contents/'+gh.path;
+ var H={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'};
+ return fetch(api+'?ref='+encodeURIComponent(gh.branch),{headers:H}).then(function(r){
+  if(r.status===401||r.status===403)throw {code:'not_writer'};
+  if(r.status===404)return {};
+  if(!r.ok)throw {code:'upstream_error',message:'HTTP '+r.status};
+  return r.json();
+ }).then(function(j){
+  var body={message:'Update site from admin panel',content:b64utf8(html),branch:gh.branch}; if(j&&j.sha)body.sha=j.sha;
+  return fetch(api,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},H),body:JSON.stringify(body)});
+ }).then(function(r){
+  if(r.status===401||r.status===403)throw {code:'not_writer'};
+  if(r.status===409||r.status===422)throw {code:'conflict'};
+  if(!r.ok)throw {code:'upstream_error',message:'HTTP '+r.status};
+  return r.json();
+ });
+}
+function failMsg(e){
+ var c=e&&e.code;
+ if(c==='not_writer'||c==='not_granted'||c==='consent_required')return 'Нет прав на публикацию. Для артефакта нужен доступ на редактирование, для GitHub Pages — токен с правом Contents: Read and write.';
+ if(c==='conflict')return 'Кто‑то опубликовал новую версию раньше. Обновите страницу и внесите изменения ещё раз.';
+ if(c==='too_large')return 'Страница слишком большая. Удалите часть скриншотов и попробуйте снова.';
+ if(c==='rate_limited')return 'Слишком частые публикации. Подождите минуту.';
+ return 'Не удалось опубликовать: '+((e&&e.message)||c||'ошибка сети')+'. Попробуйте ещё раз.';
+}
 function save(){
  var html=buildHtml();
  if(html.length>15.5*1024*1024){setStatus('Страница больше 16 МБ, удалите часть скриншотов.','err');return;}
  setStatus('Публикую…');
  var u=(window.claude&&typeof window.claude.use==='function')?window.claude.use('artifact'):Promise.resolve(null);
  u.then(function(art){
-  if(!art){
-   var dl=document.getElementById('dl');
-   if(dl){dl.hidden=false;dl.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));}
-   setStatus('Публикация работает только в открытой на claude.ai версии страницы. Здесь можно скачать HTML с изменениями.','err');
-   return;
+  if(art){
+   return art.publish(html).then(function(){pristine=JSON.stringify(state);setStatus('Опубликовано. Страница обновится у всех, кто её открыл.','ok');})
+    .catch(function(e){setStatus(failMsg(e),'err');});
   }
-  return art.publish(html).then(function(){
-   pristine=JSON.stringify(state);
-   setStatus('Опубликовано. Страница обновится у всех, кто её открыл.','ok');
-  }).catch(function(e){
-   var c=e&&e.code;
-   if(c==='not_writer'||c==='not_granted'||c==='consent_required')setStatus('У вас нет прав на редактирование этой страницы. Попросите владельца дать доступ на редактирование.','err');
-   else if(c==='conflict')setStatus('Кто‑то опубликовал новую версию раньше. Страница перезагрузится, внесите изменения ещё раз.','err');
-   else if(c==='too_large')setStatus('Страница слишком большая. Удалите часть скриншотов и попробуйте снова.','err');
-   else if(c==='rate_limited')setStatus('Слишком частые публикации. Подождите минуту.','err');
-   else setStatus('Не удалось опубликовать: '+((e&&e.message)||c||'ошибка')+'. Попробуйте ещё раз.','err');
-  });
+  var gh=ghTarget();
+  if(gh){
+   var token=ghToken();
+   if(!token){setStatus('Введите токен GitHub в поле выше, затем нажмите «Опубликовать» ещё раз.','err');return;}
+   return saveGithub(html,gh,token).then(function(){pristine=JSON.stringify(state);setStatus('Опубликовано в GitHub. Сайт обновится через одну‑две минуты, обновите страницу позже.','ok');})
+    .catch(function(e){setStatus(failMsg(e),'err');});
+  }
+  var dl=document.getElementById('dl');
+  if(dl){dl.hidden=false;dl.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));}
+  setStatus('На этом хостинге публикация недоступна. Скачайте HTML с изменениями и загрузите его на сайт.','err');
  });
 }
 
