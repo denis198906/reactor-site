@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>StroykaBuild</title>
+<title>Reactor</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style id="app-style">
 :root{
@@ -524,7 +524,7 @@ var UI={
   mName:'Name',mCompany:'Company',mPhone:'Phone',mRole:'Role',mSubj:'Demo request',mFrom:'from',lang:'Language'}
 };
 var LANG_NAMES={ru:'Русский',en:'English'};
-var DEFAULT={v:3,brand:'StroykaBuild',contact:'sales@stroykabuild.ru',colors:{signal:'#E4572E',steel:'#1F4E79'},defaultLang:'ru',content:{ru:RU,en:EN},images:[]};
+var DEFAULT={v:3,brand:'Reactor',contact:'sales@reactor.build',colors:{signal:'#E4572E',steel:'#1F4E79'},defaultLang:'ru',content:{ru:RU,en:EN},images:[]};
 
 var TYPES={
  roles:{label:'Роли',fields:[['title','Роль'],['pain','Боль','textarea'],['points','Что даёт, по строке','textarea']],blank:{title:'Новая роль',pain:'',points:''}},
@@ -733,7 +733,7 @@ function renderAdmin(){
   '<div class="tabs" role="tablist"><button role="tab" aria-selected="'+(tab==='sections')+'" data-tab="sections">Разделы</button><button role="tab" aria-selected="'+(tab==='images')+'" data-tab="images">Скриншоты</button><button role="tab" aria-selected="'+(tab==='style')+'" data-tab="style">Оформление</button></div>'+
   '<div class="abody">'+(tab==='sections'?tabSections():tab==='images'?tabImages():tabStyle())+'</div>'+
   '<div class="af"><div class="st '+statusKind+'">'+esc(statusMsg||(dirty?'Есть несохранённые изменения. Они видны только вам, пока не опубликованы.':'Изменений нет.'))+'</div>'+(function(){var gh=ghTarget(); if(artNs||!artKnown||!gh)return ''; return '<div class="fld"><span>Токен GitHub для публикации в '+esc(gh.owner+'/'+gh.repo)+'</span><input type="password" id="gh-token" autocomplete="off" placeholder="github_pat_…" value="'+esc(ghToken())+'"><span class="hint" style="font-weight:400">Fine‑grained token с правом Contents: Read and write только для этого репозитория. Хранится в этой вкладке до её закрытия и отправляется только на api.github.com.</span></div>';})()+
-  '<div class="bt"><button class="btn btn-primary btn-sm" type="button" data-act="save"'+(dirty?'':' disabled')+'>Опубликовать</button><button class="btn btn-ghost btn-sm" type="button" data-act="discard"'+(dirty?'':' disabled')+'>Отменить изменения</button><a class="btn btn-ghost btn-sm" id="dl" href="#" download="stroykabuild-landing.html" hidden>Скачать HTML</a></div></div>';
+  '<div class="bt"><button class="btn btn-primary btn-sm" type="button" data-act="save"'+(dirty?'':' disabled')+'>Опубликовать</button><button class="btn btn-ghost btn-sm" type="button" data-act="discard"'+(dirty?'':' disabled')+'>Отменить изменения</button><a class="btn btn-ghost btn-sm" id="dl" href="#" download="reactor-landing.html" hidden>Скачать HTML</a></div></div>';
  bindDrop();
  var ls=document.getElementById('adm-lang'); if(ls)ls.addEventListener('change',function(){setLang(ls.value);});
  var tk=document.getElementById('gh-token'); if(tk)tk.addEventListener('input',function(){try{sessionStorage.setItem('sb-gh-token',tk.value.trim());}catch(e){}});
