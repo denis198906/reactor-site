@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StroykaBuild</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style id="app-style">
+:root{
+  --step-word:"Шаг "; --signal-base:#E4572E; --steel-base:#1F4E79;
+  --ground:#F1F2EF; --surface:#FFFFFF; --surface-2:#E7E9E4;
+  --ink:#14202B; --ink-2:#4B5762; --line:#C9CEC8; --line-soft:#DEE1DB;
+  --steel:var(--steel-base); --steel-soft:color-mix(in srgb,var(--steel-base) 13%,#fff);
+  --signal:var(--signal-base); --signal-ink:#FFFFFF;
+  --ok:#2E7D4F; --warn:#B7791F; --shadow:0 18px 50px rgba(20,32,43,.14);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F171F; --surface:#182430; --surface-2:#1F2D3A;
+    --ink:#E8ECEF; --ink-2:#A3AEB9; --line:#33434F; --line-soft:#26333E;
+    --steel:color-mix(in srgb,var(--steel-base) 45%,#fff); --steel-soft:color-mix(in srgb,var(--steel-base) 35%,#182430);
+    --signal:color-mix(in srgb,var(--signal-base) 85%,#fff); --signal-ink:#14202B;
+    --ok:#6FCB8F; --warn:#E0B24C; --shadow:0 18px 50px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F171F; --surface:#182430; --surface-2:#1F2D3A;
+  --ink:#E8ECEF; --ink-2:#A3AEB9; --line:#33434F; --line-soft:#26333E;
+  --steel:color-mix(in srgb,var(--steel-base) 45%,#fff); --steel-soft:color-mix(in srgb,var(--steel-base) 35%,#182430);
+  --signal:color-mix(in srgb,var(--signal-base) 85%,#fff); --signal-ink:#14202B;
+  --ok:#6FCB8F; --warn:#E0B24C; --shadow:0 18px 50px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:"Golos Text","Segoe UI",Roboto,Arial,sans-serif;font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:"Unbounded","Arial Black",Arial,sans-serif;margin:0;line-height:1.1;text-wrap:balance}
+h1{font-weight:700;font-size:clamp(34px,5.2vw,64px);letter-spacing:-.01em}
+h2{font-weight:500;font-size:clamp(26px,3.2vw,40px)}
+h3{font-weight:500;font-size:18px;line-height:1.3}
+p{margin:0}
+a{color:var(--steel)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 32px}
+@media (max-width:720px){.wrap{padding:0 18px}}
+section{padding:88px 0;border-top:1px solid var(--line-soft);scroll-margin-top:72px}
+@media (max-width:720px){section{padding:60px 0}}
+.lead{color:var(--ink-2);max-width:60ch;font-size:19px;margin-top:14px}
+.sec-head{max-width:760px;margin-bottom:40px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:16px;padding:14px 22px;border-radius:6px;text-decoration:none;cursor:pointer;border:1.5px solid transparent;white-space:nowrap}
+.btn-primary{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+.btn-primary:hover{filter:brightness(.94)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn-ghost:hover{background:var(--surface-2)}
+.btn-sm{padding:9px 14px;font-size:14px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--ground) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+.nav .wrap{display:flex;align-items:center;gap:26px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-family:"Unbounded",sans-serif;font-weight:700;font-size:16px}
+.brand i{width:22px;height:22px;border:3px solid var(--signal);border-radius:3px;display:block;position:relative}
+.brand i::after{content:"";position:absolute;inset:4px;background:var(--ink);opacity:.9}
+.nav ul{list-style:none;margin:0 0 0 auto;padding:0;display:flex;gap:22px}
+.nav ul a{color:var(--ink-2);text-decoration:none;font-size:15px}
+.nav ul a:hover{color:var(--ink)}
+.lsw{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex:none}
+.lsw button{background:none;border:0;padding:5px 11px;font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.lsw button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
+@media (max-width:900px){.nav ul{display:none}.lsw{margin-left:auto}}
+.hero{border-top:0;padding:72px 0 64px}
+.hero .wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+@media (max-width:980px){.hero .wrap{grid-template-columns:1fr}}
+.hero .kicker{display:inline-block;font-size:14px;color:var(--steel);border:1px solid var(--steel);padding:5px 10px;border-radius:999px;margin-bottom:22px}
+.hero .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.hero .note{color:var(--ink-2);font-size:14px;margin-top:14px}
+.shot{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
+.shot img{width:100%;height:auto}
+.screen{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;font-size:13px;position:relative}
+.screen .bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line-soft);background:var(--surface-2)}
+.screen .bar i{width:10px;height:10px;border-radius:50%;background:var(--line);display:block}
+.screen .bar .url{margin-left:8px;flex:1;background:var(--surface);border:1px solid var(--line-soft);border-radius:4px;padding:3px 10px;color:var(--ink-2);font-family:"JetBrains Mono",monospace;font-size:11.5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.screen .body{display:grid;grid-template-columns:150px 1fr}
+@media (max-width:520px){.screen .body{grid-template-columns:1fr}.screen aside{display:none}}
+.screen aside{border-right:1px solid var(--line-soft);padding:12px 0}
+.screen aside div{padding:7px 14px;color:var(--ink-2)}
+.screen aside div.on{color:var(--ink);font-weight:600;background:var(--steel-soft);border-left:3px solid var(--steel);padding-left:11px}
+.screen main{padding:14px 16px 18px;min-width:0}
+.screen .ttl{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+.screen .ttl b{font-family:"Unbounded",sans-serif;font-weight:500;font-size:13px}
+.screen .ttl span{color:var(--ink-2);font-size:12px;white-space:nowrap}
+.screen table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.screen th{text-align:left;font-weight:500;color:var(--ink-2);font-size:11px;padding:6px;border-bottom:1px solid var(--line)}
+.screen td{padding:7px 6px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.screen td.num{font-family:"JetBrains Mono",monospace;font-size:12px;white-space:nowrap}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.pill.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.pill.steel{background:var(--steel-soft);color:var(--steel)}
+.stamp{position:absolute;right:22px;bottom:18px;transform:rotate(-7deg);border:3px double var(--signal);color:var(--signal);padding:7px 12px 6px;font-family:"Unbounded",sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;line-height:1.2;background:color-mix(in srgb,var(--surface) 85%,transparent);animation:press .5s cubic-bezier(.2,.9,.3,1.2) .4s both}
+.stamp small{display:block;font-family:"JetBrains Mono",monospace;font-weight:400;font-size:9.5px;letter-spacing:.04em;text-transform:none}
+@keyframes press{from{opacity:0;transform:rotate(-7deg) scale(1.5)}to{opacity:1;transform:rotate(-7deg) scale(1)}}
+@media (prefers-reduced-motion:reduce){.stamp{animation:none}}
+.strip{border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);background:var(--surface);padding:18px 0}
+.strip .wrap{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:center;color:var(--ink-2);font-size:14px}
+.strip .wrap>span{color:var(--ink);font-weight:600}
+.strip b{font-weight:500;color:var(--ink);font-family:"JetBrains Mono",monospace;font-size:13px}
+.roles{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);background:var(--surface);border-radius:10px;overflow:hidden}
+.role{padding:28px 26px;border-right:1px solid var(--line)}
+.role:last-child{border-right:0}
+@media (max-width:900px){.roles{grid-template-columns:1fr}.role{border-right:0;border-bottom:1px solid var(--line)}.role:last-child{border-bottom:0}}
+.role h3{font-size:20px;margin-bottom:14px}
+.role .pain{color:var(--ink-2);padding-left:14px;border-left:2px solid var(--line);margin-bottom:16px;font-size:15.5px}
+.role ul{margin:0;padding-left:18px;font-size:15.5px}
+.role li{margin:6px 0}
+.role li::marker{color:var(--signal)}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;counter-reset:step}
+@media (max-width:1000px){.flow{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.flow{grid-template-columns:1fr}}
+.step{padding-top:18px;border-top:3px solid var(--steel);counter-increment:step}
+.step::before{content:counter(step);font-family:"Unbounded",sans-serif;font-weight:700;font-size:28px;color:var(--steel);display:block;margin-bottom:6px;line-height:1}
+.step h3{font-size:17px;margin-bottom:8px}
+.step p{color:var(--ink-2);font-size:15px}
+.step .out{margin-top:12px;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line-soft);padding:8px 10px;border-radius:6px}
+.step .out b{font-weight:600;display:block;color:var(--ink-2);font-size:11.5px;margin-bottom:2px}
+.mods{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media (max-width:900px){.mods{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.mods{grid-template-columns:1fr}}
+.mod{background:var(--surface);border:1px solid var(--line-soft);border-radius:8px;padding:22px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.mod .mimg{margin:-22px -22px 10px;aspect-ratio:16/9;border-bottom:1px solid var(--line-soft);background:var(--surface-2)}
+.mod .mimg img{width:100%;height:100%;object-fit:cover;object-position:top left}
+.mod h3{font-size:17px}
+.mod p{color:var(--ink-2);font-size:15px}
+.mod .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:10px}
+.mod .tags span{font-size:12px;color:var(--ink-2);background:var(--surface-2);padding:2px 8px;border-radius:4px}
+.band{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+@media (max-width:900px){.band{grid-template-columns:1fr}}
+.band h2{font-size:clamp(24px,2.6vw,32px)}
+.band ul{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:12px}
+.band li{padding-left:22px;position:relative;font-size:16px}
+.band li::before{content:"";position:absolute;left:0;top:9px;width:10px;height:10px;background:var(--steel);border-radius:2px}
+.band .signal li::before{background:var(--signal);border-radius:50%}
+.comp{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media (max-width:1000px){.comp{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.comp{grid-template-columns:1fr}}
+.comp div{background:var(--surface);border:1px solid var(--line-soft);border-left:4px solid var(--steel);padding:16px 18px;border-radius:6px}
+.comp b{display:block;font-family:"JetBrains Mono",monospace;font-weight:500;font-size:14px;margin-bottom:6px}
+.comp p{color:var(--ink-2);font-size:14.5px}
+.deploy{display:grid;grid-template-columns:1fr 1fr;gap:16px;background:var(--steel-soft);border-radius:10px;padding:26px 28px}
+@media (max-width:720px){.deploy{grid-template-columns:1fr}}
+.deploy h3{font-size:18px;margin-bottom:8px}
+.deploy p{color:var(--ink-2);font-size:15px}
+.roll{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:r}
+@media (max-width:900px){.roll{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.roll{grid-template-columns:1fr}}
+.roll div{counter-increment:r;background:var(--surface);border:1px solid var(--line-soft);border-radius:8px;padding:20px}
+.roll div::before{content:var(--step-word) counter(r);font-size:12.5px;font-weight:600;color:var(--signal);display:block;margin-bottom:8px}
+.roll h3{font-size:17px;margin-bottom:8px}
+.roll p{color:var(--ink-2);font-size:15px}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media (max-width:900px){.plans{grid-template-columns:1fr}}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:26px 24px;display:flex;flex-direction:column}
+.plan.hot{border-color:var(--signal);box-shadow:0 0 0 3px color-mix(in srgb,var(--signal) 20%,transparent)}
+.plan h3{font-size:20px}
+.plan .for{color:var(--ink-2);font-size:14.5px;margin-top:4px;min-height:44px}
+.plan .price{font-family:"Unbounded",sans-serif;font-weight:500;font-size:20px;margin:18px 0 4px}
+.plan .price small{display:block;font-family:"Golos Text",sans-serif;font-weight:400;font-size:13px;color:var(--ink-2)}
+.plan ul{margin:16px 0 22px;padding-left:18px;font-size:15px;display:grid;gap:6px}
+.plan li::marker{color:var(--steel)}
+.plan .btn{margin-top:auto}
+.gal{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+@media (max-width:760px){.gal{grid-template-columns:1fr}}
+.gal figure{margin:0}
+.gal figcaption{font-size:14.5px;color:var(--ink-2);margin-top:10px}
+.gal .empty{grid-column:1/-1;border:1px dashed var(--line);border-radius:10px;padding:34px;color:var(--ink-2);text-align:center;font-size:15px}
+.cgroup{margin-top:34px}
+.cgroup:first-of-type{margin-top:0}
+.cgroup>h3{font-size:15px;color:var(--steel);letter-spacing:.02em;padding-bottom:10px;border-bottom:2px solid var(--steel);margin-bottom:4px;display:flex;justify-content:space-between;align-items:baseline}
+.cgroup>h3 small{font-family:"JetBrains Mono",monospace;font-weight:400;font-size:12px;color:var(--ink-2)}
+.cgrid{display:grid;grid-template-columns:repeat(2,1fr);column-gap:36px}
+@media (max-width:800px){.cgrid{grid-template-columns:1fr}}
+.cf{border-bottom:1px solid var(--line-soft)}
+.cf summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 14px;padding:14px 0}
+.cf summary::-webkit-details-marker{display:none}
+.cf summary b{font-weight:600;font-size:16px}
+.cf summary span{grid-column:1;color:var(--ink-2);font-size:14.5px}
+.cf summary::after{content:"+";grid-column:2;grid-row:1/3;align-self:center;font-family:"Unbounded",sans-serif;color:var(--signal);font-size:15px}
+.cf[open] summary::after{content:"–"}
+.cf ul{margin:0 0 16px;padding-left:18px;font-size:14.5px;display:grid;gap:5px}
+.cf li::marker{color:var(--steel)}
+.cf .stub{font-size:13px;color:var(--ink-2);margin:0 0 14px}
+.faq{max-width:820px}
+.faq details{border-top:1px solid var(--line-soft);padding:6px 0}
+.faq details:last-child{border-bottom:1px solid var(--line-soft)}
+.faq summary{cursor:pointer;font-weight:600;font-size:17px;padding:14px 0;list-style:none;display:flex;justify-content:space-between;gap:16px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-family:"Unbounded",sans-serif;color:var(--signal);flex:none}
+.faq details[open] summary::after{content:"–"}
+.faq details p{color:var(--ink-2);padding:0 0 16px;max-width:65ch}
+.demo{background:var(--ink);color:var(--ground)}
+.demo h2,.demo p{color:inherit}
+.demo .wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+@media (max-width:900px){.demo .wrap{grid-template-columns:1fr}}
+.demo .lead{color:color-mix(in srgb,var(--ground) 72%,transparent)}
+.demo ul{margin:22px 0 0;padding-left:18px;color:color-mix(in srgb,var(--ground) 82%,transparent);display:grid;gap:8px}
+.demo li::marker{color:var(--signal)}
+.dform{background:var(--surface);color:var(--ink);border-radius:10px;padding:26px;display:grid;gap:14px}
+.dform label{display:grid;gap:6px;font-size:14px;font-weight:600}
+.dform input,.dform select,.dform textarea{font:inherit;font-size:15px;font-weight:400;padding:11px 12px;border:1px solid var(--line);border-radius:6px;background:var(--ground);color:var(--ink);width:100%}
+.dform textarea{min-height:84px;resize:vertical}
+.dform .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){.dform .row{grid-template-columns:1fr}}
+.dform .fine{font-size:12.5px;color:var(--ink-2);font-weight:400}
+.dform .sent{display:none;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok);padding:12px 14px;border-radius:6px;font-weight:600}
+.dform.done .sent{display:block}
+footer{padding:34px 0;color:var(--ink-2);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:10px 28px;justify-content:space-between}
+footer a{color:var(--ink-2)}
+footer .adm{background:none;border:0;color:var(--ink-2);font:inherit;cursor:pointer;text-decoration:underline;padding:0}
+
+/* ---------- admin drawer ---------- */
+#admin{position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);background:var(--surface);color:var(--ink);border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:50;display:flex;flex-direction:column;font-size:14px}
+#admin .ah{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line-soft)}
+#admin .ah b{font-family:"Unbounded",sans-serif;font-weight:500;font-size:14px;flex:1}
+#admin .tabs{display:flex;border-bottom:1px solid var(--line-soft)}
+#admin .tabs button{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:10px;font:inherit;font-weight:600;color:var(--ink-2);cursor:pointer}
+#admin .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--signal)}
+#admin .abody{flex:1;overflow:auto;padding:16px 18px;display:grid;gap:14px;align-content:start}
+#admin .af{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line-soft);padding:12px 18px;display:grid;gap:8px}
+#admin .af .st{font-size:12.5px;color:var(--ink-2);min-height:18px}
+#admin .af .st.err{color:var(--signal)}
+#admin .af .st.ok{color:var(--ok)}
+#admin .af .bt{display:flex;gap:8px;flex-wrap:wrap}
+#admin .ic{background:none;border:1px solid var(--line);border-radius:5px;padding:3px 8px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;line-height:1.3}
+#admin .ic:hover{background:var(--surface-2)}
+#admin .ic.x{color:var(--signal)}
+#admin .card{border:1px solid var(--line-soft);border-radius:8px;background:var(--ground)}
+#admin .card>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 12px;font-weight:600}
+#admin .card>summary::-webkit-details-marker{display:none}
+#admin .card>summary .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#admin .card>summary .off{color:var(--ink-2);font-weight:400;font-size:12px}
+#admin .cb{padding:4px 12px 12px;display:grid;gap:10px;border-top:1px solid var(--line-soft)}
+#admin .fld{display:grid;gap:4px}
+#admin .fld span{font-size:12px;color:var(--ink-2);font-weight:600}
+#admin .fld input[type=text],#admin .fld input[type=email],#admin .fld select,#admin .fld textarea{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);width:100%}
+#admin .fld textarea{min-height:64px;resize:vertical;line-height:1.4}
+#admin .fld.chk{grid-template-columns:auto 1fr;align-items:center;gap:8px}
+#admin .item{border:1px solid var(--line-soft);border-radius:6px;background:var(--surface);padding:8px 10px 10px;display:grid;gap:8px}
+#admin .item .ih{display:flex;align-items:center;gap:6px}
+#admin .item .ih .t{flex:1;font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#admin .items{display:grid;gap:8px}
+#admin .hint{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+#admin .drop{border:2px dashed var(--line);border-radius:8px;padding:18px;text-align:center;color:var(--ink-2);cursor:pointer}
+#admin .drop.over{border-color:var(--signal);color:var(--ink)}
+#admin .drop input{display:none}
+#admin .imgs{display:grid;gap:10px}
+#admin .img{display:grid;grid-template-columns:96px 1fr;gap:10px;border:1px solid var(--line-soft);border-radius:6px;padding:8px;background:var(--surface)}
+#admin .img img{width:96px;height:60px;object-fit:cover;object-position:top left;border-radius:4px;border:1px solid var(--line-soft)}
+#admin .img .m{font-size:12px;color:var(--ink-2)}
+#admin .img .u{font-size:12px;color:var(--steel)}
+#admin .colors{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#admin .colors label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+#admin .colors input[type=color]{width:40px;height:30px;border:1px solid var(--line);border-radius:5px;padding:2px;background:var(--surface)}
+</style>
+
+</head><body>
+<script id="site-data" type="application/json">{}</script>
+<div id="app"></div>
+<aside id="admin" hidden aria-label="Администрирование"></aside>
+
+<script id="app-script">
+(function(){
+'use strict';
+var FONT='<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;700&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">';
+
+var RU={
+ hero:{kicker:'Исполнительная документация по ГОСТ Р 70108‑2025',
+  title:'Стройка, которую госстройнадзор принимает с первого раза',
+  lead:'Одна платформа для заказчика, генподрядчика и технадзора. Документы, согласование, журналы работ, сметы и BIM‑модель живут в одной системе, а исполнительная документация уходит в надзор готовым XML, а не коробкой бумаги.',
+  cta1:'Запросить демо', cta2:'Что внутри', note:'Веб, iOS и Android. Интерфейс на русском, английском и китайском. Облако или ваш контур.', img:''},
+ norms:'ГОСТ Р 70108‑2025\nПриказ 1026/пр\nПриказ 344/пр\nXSD Минстроя\nФСНБ‑2022\nISO 19650\nУКЭП КриптоПро',
+ sections:[
+ {id:'roles',type:'roles',on:true,nav:'Кому',title:'Три стороны стройки, одна версия правды',lead:'Каждый видит свои задачи и свою зону ответственности. Данные при этом общие, поэтому спорить о том, «какая версия актуальная», больше не нужно.',items:[
+  {title:'Заказчик',pain:'Отчёты приходят раз в неделю, в Excel, и уже устарели. Бюджет расходится со сметой, а причины видны только по факту.',points:'Прогресс по объекту в реальном времени: S‑кривая, фронты работ, панорамы по датам\nБюджет, БДР и БДДС сверяются с КС‑2 и КС‑3 автоматически\nЗамечания технадзора и их закрытие видны без звонков'},
+  {title:'Генподрядчик',pain:'Журналы ведутся на бумаге, акты подписываются задним числом, а перед сдачей вся команда неделями собирает исполнительную документацию.',points:'ОЖР, ЖВК, АОСР и спецжурналы заполняются с площадки, с телефона\nСогласование по маршрутам с заместителями и штампом на PDF\nВыгрузка в госстройнадзор по XML‑схемам Минстроя в один клик'},
+  {title:'Технадзор',pain:'Замечания фиксируются в мессенджерах, теряются и не привязаны к чертежу. Предписания не имеют сроков и истории.',points:'Замечание ставится точкой на чертеже или элементе BIM‑модели\nПредписания со сроками, ответственными и полной историей изменений\nЧек‑листы операционного контроля и входной контроль материалов'}]},
+ {id:'flow',type:'flow',on:true,nav:'Как работает',title:'От сметы до ввода в эксплуатацию, не выходя из системы',lead:'Модули идут в том же порядке, в каком идёт стройка. На каждом этапе появляется документ, который нужен на следующем.',items:[
+  {title:'Смета и тендер',text:'Расчёт по ФСНБ‑2022 с индексами и ресурсами. Ведомость объёмов рассылается подрядчикам, предложения выравниваются в одной таблице.',out:'Смета и выбранный подрядчик'},
+  {title:'Контракт',text:'Договор с иерархией допсоглашений и субподряда. График платежей связан с бюджетными статьями.',out:'Договор и график платежей'},
+  {title:'Производство работ',text:'Журналы, входной контроль, технадзор, задачи и график. Прогресс сверяется с BIM‑моделью и сканами площадки.',out:'ОЖР, ЖВК, замечания, КС‑2'},
+  {title:'Исполнительная документация',text:'АОСР и спецжурналы формируются из записей журналов, подписываются УКЭП и выгружаются в XML для госстройнадзора.',out:'Пакет ИД в электронном виде'},
+  {title:'Ввод и эксплуатация',text:'Разрешительная документация со сроками, а после ввода — активы, планово‑предупредительные ремонты и гарантии.',out:'Разрешение на ввод, реестр активов'}]},
+ {id:'modules',type:'modules',on:true,nav:'Модули',title:'Двенадцать ключевых модулей вместо двенадцати программ',lead:'Подключайте только нужные. Все модули работают с одними и теми же объектами, людьми и документами. Полный состав платформы ниже.',items:[
+  {title:'Объекты и проекты',text:'Каталог объектов с фильтрами и карточками, центр объекта с иерархией здание, этаж, помещение. Ролевые панели ПТО, стройконтроля заказчика и подрядчика. Реестр рисков с матрицей и bow‑tie анализом.',tags:'Центр объекта\nРиски\nПанели по ролям',img:''},
+  {title:'Документы',text:'Среда общих данных: папки с правами, реестр MDR, версии и сравнение PDF с подсветкой отличий, трансмитталы, проверка комплектности, выгрузка реестра в Excel. Классификация и OCR при загрузке.',tags:'MDR\nТрансмитталы\nСравнение версий',img:''},
+  {title:'Согласование и подпись',text:'Визуальный дизайнер маршрутов со стадиями и условиями, входящие на согласование, «красный карандаш» для замечаний поверх документа, замещение на время отпуска. Подпись УКЭП через КриптоПро и QR‑штамп.',tags:'Дизайнер маршрутов\nУКЭП\nQR‑штамп',img:''},
+  {title:'Журналы работ и акты',text:'Общий журнал работ по шести разделам с подписанием и PDF, специальные журналы, входной контроль материалов, АОСР из записей журнала с правилами комплектности, акты КС‑2 и КС‑3.',tags:'ОЖР\nЖВК\nАОСР\nКС‑2/КС‑3',img:''},
+  {title:'Стройконтроль и технадзор',text:'Замечания с точкой на чертеже, предписания по шаблонам бланков, ответы подрядчика, вызов инспектора на скрытые работы, чек‑листы и схемы контроля, голосовая фиксация отклонений.',tags:'Предписания\nЧек‑листы\nВызов инспектора',img:''},
+  {title:'Сметы, бюджет и финансы',text:'Импорт смет из Гранд‑Сметы, ARPS, GSFX и ГГЭ, пересчёт, сравнение и корректировки. Бюджет план и факт по статьям, график платежей, P&L, НДС, прогноз выполнения, Earned Value.',tags:'Импорт смет\nP&L\nEarned Value',img:''},
+  {title:'Тендеры и контракты',text:'Тендер от публикации до присуждения: приглашения, заявки, тендерные формы, выравнивание предложений, AI‑анализ, конвертация в договор. Договоры с допсоглашениями, субподрядом, версиями и напоминаниями.',tags:'Левелинг\nAI‑анализ\nДопсоглашения',img:''},
+  {title:'BIM‑модель',text:'IFC‑модели в браузере: выделение, свойства, сечения, правка элементов, захватки и сравнение модели со сканом площадки. На мобильных модель открывается как 3D‑сцена.',tags:'IFC\nScan‑to‑BIM\nМобильный 3D',img:''},
+  {title:'Планирование и время',text:'Календарно‑сетевые графики с импортом из MS Project, канбан‑доски задач, календарь с загрузкой исполнителей, табель с бригадным списанием часов и отчёт по выработке, фронты работ.',tags:'КСГ\nКанбан\nТаймшит',img:''},
+  {title:'Площадка и поле',text:'Ежедневный журнал площадки с людьми, техникой и погодой, фотофиксация, пунч‑лист. Офлайн‑режим прораба: замечания и факты работ без сети, синхронизация при появлении связи. Цифровой генплан.',tags:'Офлайн\nПунч‑лист\nГенплан',img:''},
+  {title:'Совместная работа',text:'Чаты с реакциями и закреплением, видеозвонки с живыми субтитрами, совещания с повесткой, поручениями и протоколом, уведомления с режимом тишины, глобальный поиск.',tags:'Чаты\nЗвонки\nПротоколы',img:''},
+  {title:'Снабжение и эксплуатация',text:'Склад с остатками, движениями, лимитными картами и инвентаризацией, журнал поставок с рейтингом поставщиков. Разрешительная документация со сроками. После ввода: активы из BIM, заявки, ППР, гарантии.',tags:'Склад\nИРД\nАктивы',img:''}]},
+ {id:'gallery',type:'gallery',on:true,nav:'Интерфейс',title:'Так выглядит платформа',lead:'Экраны из рабочей версии: журналы, согласование, BIM‑модель и график.',items:[]},
+ {id:'catalog',type:'catalog',on:true,nav:'Все модули',title:'Полный состав платформы',lead:'Всё, что есть в клиенте сегодня, по группам главного меню. Нажмите на модуль, чтобы раскрыть возможности.',items:[
+  {group:'Объект и площадка',title:'Объекты',text:'Каталог объектов рабочего пространства с поиском, фильтрами, списком и сеткой.',points:'Создание объекта с первичным наполнением модулями\nБыстрые фильтры и боковая панель фильтров\n3D‑визуализация здания и встроенный просмотр PDF\nВкладка календарно‑сетевого графика'},
+  {group:'Объект и площадка',title:'Центр объекта',text:'Ядро стройконтроля: портфели, объекты, журналы и комплекты документов с панелями по ролям.',points:'Панели ПТО, стройконтроля заказчика и подрядчика\nПолитики объекта: критическое отклонение блокирует АОСР и приёмку этапа\nКомплекты документов с историей версий\nАудит действий по объекту'},
+  {group:'Объект и площадка',title:'Полевой контур',text:'Ежедневный журнал площадки, фотофиксация и приёмка.',points:'Записи за день: люди, техника, поставки, простои, погода\nЗакрытие дня со статусами черновик и закрыт\nПунч‑лист: замечание, устранено, принято\nФотогалерея площадки с подписями'},
+  {group:'Объект и площадка',title:'Поле без сети',text:'Офлайн‑режим прораба на телефоне: работа продолжается без связи.',points:'Замечания с фото и факты работ пишутся в очередь на устройстве\nСинхронизация каждые 30 секунд при появлении сети\nОфлайн‑копия объекта скачивается заранее\nСначала уходят фото, затем карточки, зависимости соблюдаются'},
+  {group:'Объект и площадка',title:'Фронты работ',text:'Учёт фронтов работ и выполненных объёмов по объекту.',points:'Создание фронта и записей о выполнении\nФормирование ведомости объёмов работ\nПанель: всего, активные, прогресс, записи'},
+  {group:'Объект и площадка',title:'Цифровой генплан',text:'Реестры информации о территории и гео‑объекты на карте.',points:'Реестры и гео‑объекты с координатами\nПоиск объектов рядом с точкой\nУправление видимостью слоёв'},
+  {group:'Объект и площадка',title:'Оборудование',text:'Реестр инженерного оборудования объекта.',points:'Классификаторы оборудования\nПаспорта и сертификаты по единице\nСостав и компоненты, статистика для панели'},
+  {group:'Объект и площадка',title:'Производительность',text:'Выработка по объекту: часы, объёмы, темпы.',points:'Сводка производительности по проекту\nТемп производства работ\nВиджет встраивается в другие экраны'},
+  {group:'Документы и договоры',title:'Документы',text:'Среда общих данных: реестр MDR, карточки документов, версии и трансмитталы.',points:'Новая версия, восстановление, сравнение версий PDF с подсветкой отличий\nТрансмитталы из выбранных документов, проверка полноты комплекта\nСогласование из карточки: этапы, делегирование, массовое утверждение\nАннотации с ответами, штампы, права на папку, выгрузка реестра в Excel\nПодключение IFC‑моделей к документу'},
+  {group:'Документы и договоры',title:'Папки',text:'Файловое дерево с правами, тегами и версиями.',points:'Пакетное создание, перемещение и удаление\nПрава, общие ссылки и их отзыв\nЭкспорт и импорт структуры, скачивание ZIP\nИзбранное, теги, подписки на изменения, квота хранилища'},
+  {group:'Документы и договоры',title:'Согласования',text:'Маршруты согласования с визуальным дизайнером и входящими задачами.',points:'Дизайнер маршрутов: стадии, переходы, условия, мини‑карта\nКлонирование, валидация и включение шаблонов\nКрасный карандаш: замечания поверх документа, импорт замечаний\nНормоконтроль, отклонение, отправка на доработку\nЗамещение и делегирование на время отсутствия'},
+  {group:'Документы и договоры',title:'Электронная подпись',text:'Подписание документов УКЭП и серверные маршруты подписания.',points:'КриптоПро CAdES в браузере, выбор сертификата\nКаноникализация XML побайтово совпадает с сервером\nОчередь моих подписей, подпись или отклонение шага\nПроверка подписи на сервере'},
+  {group:'Документы и договоры',title:'QR‑штамп',text:'Штамп с QR‑кодом на документ для проверки подлинности.',points:'Генерация и нанесение штампа\nНаложение штампа на существующий документ\nВызывается из карточки документа и диалога подписи'},
+  {group:'Документы и договоры',title:'Шаблоны форм',text:'Конструктор шаблонов DOCX, XLSX и JSON‑отчётов с генерацией заполненных форм.',points:'Публикация, клонирование, архив шаблонов\nМаппинг переменных на источники данных с автоподбором\nГенерация формы и история генераций\nВизуальный дизайнер отчётов'},
+  {group:'Документы и договоры',title:'Офисные документы',text:'Собственный редактор документов и таблиц с совместной работой.',points:'Совместное редактирование в реальном времени\nРоли доступа: чтение, комментатор, редактор, администратор\nЭкспорт в DOCX, PDF, RTF, HTML, TXT, EPUB, XLSX\nФормулы, листы, диаграммы, сводные таблицы'},
+  {group:'Документы и договоры',title:'Договоры',text:'Реестр договоров с иерархией допсоглашений и субподряда.',points:'Статусы: закрытие, аннулирование, приостановка, возобновление\nВерсии файлов и сравнение версий, закрывающие документы\nМаршрут согласования договора, напоминания, календарь\nAI‑анализ текста договора, журнал активности'},
+  {group:'Документы и договоры',title:'Разрешительная документация',text:'Реестр ИРД с жизненным циклом разрешений.',points:'Подать, на рассмотрение, выдать, отклонить, отозвать, продлить\nРеестр истекающих разрешений и статистика по статусам\nФильтры, сортировка, комментарии'},
+  {group:'Документы и договоры',title:'Управление изменениями',text:'Реестр событий изменения по проекту.',points:'Событие изменения с позициями сметы\nПереводы статусов по жизненному циклу\nКонвертация в допсоглашение или заказ'},
+  {group:'Контроль качества и исполнительная документация',title:'Общий журнал работ',text:'Электронный ОЖР по шести разделам с подписанием и PDF.',points:'Разделы: персонал, спецжурналы, работы, контроль, ИД, данные ГСН\nПодпись, закрытие с проверкой, переоткрытие\nКопирование вчерашних записей\nГенерация PDF журнала, аудит'},
+  {group:'Контроль качества и исполнительная документация',title:'Акты КС‑2 и КС‑3',text:'Акты выполненных работ и справки о стоимости.',points:'Создание и подпись КС‑2\nПодбор КС‑2 для включения в КС‑3\nВедомости и отчёт КС‑3'},
+  {group:'Контроль качества и исполнительная документация',title:'АОСР',text:'Акты освидетельствования скрытых работ.',points:'Акт из записи общего журнала работ\nПравила комплектности: вид работ, обязательные документы\nОчередь на подпись, подписи, отправка на согласование\nЭкспорт акта и описи, аннулирование'},
+  {group:'Контроль качества и исполнительная документация',title:'Входной контроль',text:'Журнал входного контроля материалов и документы качества.',points:'Записи, подписание, формирование акта из выбранных записей\nРешение о допуске: годен или не годен, гейт по материалам\nПрослеживаемость материалов по цепочке\nOCR документов качества, политики и шаблоны политик'},
+  {group:'Контроль качества и исполнительная документация',title:'Строительный контроль',text:'Этапы контроля, отклонения, приёмка и показатели по объекту.',points:'Этапы с инспектором, сроками и продвижением\nВходной контроль с подписью акта, критические гейты\nОтклонения: запись, устранение, закрытие\nПриёмка: отправка, одобрение, отклонение\nГолосовой помощник для фиксации отклонения\nКалендарь проверок, фотогалерея, шифры РД, панель объекта'},
+  {group:'Контроль качества и исполнительная документация',title:'Замечания и предписания',text:'Технадзор: замечания, предписания подрядчику, приёмка скрытых работ.',points:'Замечание привязано к точке на чертеже, фотогалерея\nПредписание из выбранных замечаний по шаблону бланка\nОтвет подрядчика: предоставить, принять, отклонить\nВызов инспектора по слотам, открытие скрытых работ\nСхемы операционного контроля, подписание акта освидетельствования'},
+  {group:'Контроль качества и исполнительная документация',title:'Чек‑листы',text:'Исполнение чек‑листов по шаблонам с приёмкой.',points:'Библиотека шаблонов: импорт, публикация, архив, клонирование\nНазначение исполнителю, ответы и вложения\nОтправка, согласование, отклонение, возврат на доработку\nИстория и сводка'},
+  {group:'Планирование и финансы',title:'Задачи',text:'Канбан‑доски: пространства, доски, списки, карточки.',points:'Перетаскивание карточек без задержки\nКомментарии, метки, участники доски\nПоиск по доскам'},
+  {group:'Планирование и финансы',title:'Календарь',text:'События и задачи с оценкой загрузки исполнителей.',points:'Режимы просмотра и навигация по периодам\nСоздание, перенос и удаление событий\nИндикатор загрузки, панель задач'},
+  {group:'Планирование и финансы',title:'Табель',text:'Учёт рабочего времени и выработки.',points:'Мой табель, табели сотрудников для руководителя\nСписание часов за бригаду\nОтправка на согласование, отчёт по выработке'},
+  {group:'Планирование и финансы',title:'Календарно‑сетевые графики',text:'Графики производства работ с интерактивным планировщиком.',points:'Список графиков по объекту, основной график\nПланировщик с критическим путём и ресурсами\nЗадачи графика и справочники'},
+  {group:'Планирование и финансы',title:'Сметы',text:'Реестр смет с импортом из сметных программ.',points:'Импорт Гранд‑Смета XML, ARPS, GSFX, ГГЭ\nПересчёт, сравнение смет, корректировки, автоклассификация позиций\nЭкспорт в Excel и ARPS\nМ‑29, давальческие материалы, транспорт и франко\nТендер из сметы, отправка на согласование'},
+  {group:'Планирование и финансы',title:'Бюджет',text:'Финансовый контур проекта.',points:'Статьи план, факт, остаток, прогноз, отклонение\nГрафик платежей, подтверждение и перенос оплат\nСинхронизация со сметой, снимки бюджета\nP&L, оборотный капитал, НДС, прогноз выполнения, Earned Value'},
+  {group:'Планирование и финансы',title:'Финансовый контроль',text:'Ведомость стоимости, заявки на оплату и удержания.',points:'Schedule of Values и заявки на оплату\nRelease retainage с подтверждением\nCost‑to‑Complete, одобренные изменения, проверка счетов'},
+  {group:'Планирование и финансы',title:'Риски',text:'Реестр рисков проекта.',points:'Матрица рисков, bow‑tie диаграмма\nЭкспорт отчёта в PDF\nСоздание, правка, удаление'},
+  {group:'Закупки и снабжение',title:'Тендеры',text:'Тендерный цикл от публикации до договора.',points:'Публикация, приём заявок, оценка, присуждение\nПриглашения, в том числе массовые, шорт‑лист\nТендерные формы: шаблон, копия, импорт из CSV\nВыравнивание предложений, нормализация единиц\nAI‑анализ предложений, конвертация в договор, аудит'},
+  {group:'Закупки и снабжение',title:'Склад и закупки',text:'Складской учёт материалов и журнал поставок.',points:'Остатки, движения, номенклатура, лимитные карты\nВыдача, приход, перемещение, инвентаризация\nТипы складов: на объекте, центральный, инструментальная\nПоставки, входной контроль, претензии, рейтинг поставщиков'},
+  {group:'Закупки и снабжение',title:'Компании',text:'Участники проекта, сотрудники, роли и соответствие требованиям.',points:'Роли: заказчик, стройконтроль, застройщик\nСотрудники и привязка пользователей\nРеестр требований со сроками'},
+  {group:'Закупки и снабжение',title:'Кабинет подрядчика',text:'Личный кабинет подрядной организации.',points:'Обзор, договоры, персонал, график, документы, заявки\nЗаявки на доступ на объект\nПодача факта по задаче'},
+  {group:'Совместная работа и аналитика',title:'Сообщения',text:'Личные и групповые чаты.',points:'Ответы, редактирование, закрепление, реакции\nВложения, участники с ролями, бан и мьют\nОбновления в реальном времени'},
+  {group:'Совместная работа и аналитика',title:'Звонки',text:'Аудио и видеозвонки внутри платформы.',points:'Демонстрация экрана\nЖивые субтитры\nЗапись звука'},
+  {group:'Совместная работа и аналитика',title:'Совещания',text:'Повестка, поручения и протокол.',points:'Статусы от запланировано до опубликованного протокола\nВопросы повестки: решён, обсуждён, отложен\nПросроченные поручения открывают следующую встречу\nПеренос нерешённых вопросов'},
+  {group:'Совместная работа и аналитика',title:'Уведомления',text:'Оповещения, согласования и push.',points:'Отметка прочитанным, удаление, deep‑link в сущность\nРежим тишины по расписанию, категории и типы\nПодписки на объекты'},
+  {group:'Совместная работа и аналитика',title:'Поиск',text:'Глобальный поиск по сущностям.',points:'Фильтры по типам: документы, задачи, проекты\nПереход к найденной сущности'},
+  {group:'Совместная работа и аналитика',title:'Дашборды',text:'Настраиваемые панели из виджетов и интерактивная карта.',points:'Добавление и изменение размера виджетов\nСброс к исходному виду\nКарта объектов'},
+  {group:'Совместная работа и аналитика',title:'Аналитика',text:'Отчёты и дашборды с прогнозом.',points:'Подключение источников и запросы к данным\nПрогноз по Хольту‑Уинтерсу\nОтчёт по исполнительной документации, карта России'},
+  {group:'Совместная работа и аналитика',title:'Конструктор отчётов',text:'Визуальные отчёты из виджетов.',points:'KPI, столбцы, линии, круг, воронка, водопад, таблица, сводная\nШаблоны: обзор проекта, бюджет, ИРД, риски, график\nЖивой предпросмотр'},
+  {group:'Совместная работа и аналитика',title:'Помощник‑аналитик',text:'Вопрос словами превращается в разбор по данным с источниками.',points:'Пошаговый ход разбора и ссылки на источники цифр\nРазбор замечания бизнеса\nИстория разговора'},
+  {group:'Совместная работа и аналитика',title:'Просмотр BIM',text:'Модель в браузере и на мобильных.',points:'Веб‑вьювер по документу или ссылке\n3D‑сцена на телефоне\nОблака точек'},
+  {group:'Администрирование и безопасность',title:'Администрирование',text:'Единая панель настроек платформы.',points:'Роли, разрешения и политики доступа\nГруппы LDAP, управление пользователями и объектами\nКонструктор чек‑листов и виды работ\nНумерация документов, журнал безопасности, журнал переходов\nМатрицы согласования с генерацией AI'},
+  {group:'Администрирование и безопасность',title:'Справочники',text:'Пользовательские справочники с атрибутами.',points:'Импорт, экспорт и синхронизация из Excel\nСсылочные атрибуты между справочниками\nАвтогенерация кодов, конструктор схем полей'},
+  {group:'Администрирование и безопасность',title:'Вход и безопасность',text:'Авторизация и защита учётных записей.',points:'Двухфакторная аутентификация с резервными кодами\nВход через OAuth, привязка провайдеров\nАктивные сессии и выход на всех устройствах\nВосстановление пароля, подтверждение почты'},
+  {group:'Администрирование и безопасность',title:'Организация',text:'Регистрация, консоль организации и использование.',points:'Регистрация и подтверждение почты\nПриглашение пользователей и роли\nПереключение организаций, метрики использования'},
+  {group:'Администрирование и безопасность',title:'Рабочее пространство',text:'Контекст организации, команда и брендбук.',points:'Участники и разрешения\nЦвета и логотип в интерфейсе\nПланировка объекта: матрица квартир и секций'},
+  {group:'Администрирование и безопасность',title:'Лицензия',text:'Статус и срок лицензии компании.',points:'Активна или истекла, срок действия\nРеквизиты лицензии'}]},
+ {id:'band',type:'band',on:true,nav:'',title:'',lead:'',items:[
+  {title:'BIM‑модель, связанная со стройкой',lead:'Модель не лежит отдельным файлом у проектировщика. Она открывается в браузере и связана с журналами, сметой и графиком.',style:'steel',points:'**Тяжёлые IFC в браузере.** Выделение, изоляция, свойства, измерения, сечения и 2D‑планы из модели без установки ПО.\n**Захватки на модели.** Монтажные захватки рисуются в 3D и связываются с графиком третьего уровня.\n**Скан против модели.** Скан площадки совмещается с моделью, отклонения подсвечиваются тепловой картой, прогресс уходит в планировщик.\n**Замечания на элементе.** Технадзор ставит замечание прямо на элемент модели, а не «где‑то на седьмом этаже».'},
+  {title:'Помощник, который считает, а не сочиняет',lead:'Модели работают внутри вашего контура. Результат всегда проверяет человек, а расчёты остаются детерминированными.',style:'signal',points:'**Вопрос к данным на русском.** «Сколько бетона уложили в августе по корпусу 2» превращается в запрос к базе и ответ с цифрами.\n**Нормоконтроль проектной документации.** Проверка по ГОСТ Р 21.101 с заключением по разделам.\n**Классификация при загрузке.** Тип документа и код классификатора определяются автоматически.\n**Протокол совещания.** Расшифровка, разделение спикеров и структурированный протокол с поручениями.\n**Нормирование работ.** Трудозатраты по нормам, текстовый режим только для нетиповых случаев.'}]},
+ {id:'compliance',type:'compliance',on:true,nav:'Нормативы',title:'Соответствие нормам и требованиям безопасности',lead:'Платформа рассчитана на госзаказчиков и крупных застройщиков, где проверяют не только функции, но и то, где лежат данные.',items:[
+  {title:'ГОСТ Р 70108‑2025',text:'Электронная исполнительная документация как основной формат, XML, уведомление надзора за три рабочих дня.'},
+  {title:'Приказы 1026/пр и 344/пр',text:'Структура общего журнала работ в семи разделах, состав и порядок ведения ИД, форма АОСР.'},
+  {title:'XSD Минстроя',text:'Спецжурналы по схемам: буровые работы, арматурные каркасы, уход за бетоном, антикоррозионные работы, авторский надзор.'},
+  {title:'ФСНБ‑2022',text:'ГЭСН, ФСБЦ, ключи перехода и поправочные коэффициенты в сметном модуле.'},
+  {title:'УКЭП',text:'Подписание через КриптоПро с привязкой подписи к хэшу документа.'},
+  {title:'ФСТЭК и реестр ПО',text:'Аудит безопасности, статический анализ кода, перечень компонентов, подготовка к включению в реестр отечественного ПО.'},
+  {title:'SSO и роли',text:'Keycloak и LDAP, единый вход, ролевой и атрибутный доступ, разграничение между организациями на объекте.'},
+  {title:'Аудит действий',text:'Кто и когда перевёл документ, акт или предписание в новый статус, хранится единообразно для всех сущностей.'}]},
+ {id:'deploy',type:'deploy',on:true,nav:'',title:'',lead:'',items:[
+  {title:'Облако',text:'Запуск за дни, обновления без вашего участия. Данные в России.'},
+  {title:'Ваш контур',text:'Установка в вашем Kubernetes или на серверах. Полный контроль над данными, интеграция с вашим SSO и хранилищем.'}]},
+ {id:'rollout',type:'rollout',on:true,nav:'',title:'Внедрение, которое не останавливает стройку',lead:'Начинаем с одного объекта и одного процесса, который болит сильнее всего. Расширяем, когда команда уже работает в системе.',items:[
+  {title:'Демонстрация',text:'Показываем платформу на ваших сценариях: типовой объект, ваши формы журналов, ваш маршрут согласования.'},
+  {title:'Пилот на объекте',text:'Один объект, один или два модуля. Загружаем проектную документацию, настраиваем роли и маршруты.'},
+  {title:'Миграция и обучение',text:'Импорт смет, графиков из MS Project и архива документов. Обучение прорабов работе с площадки.'},
+  {title:'Запуск и сопровождение',text:'Подключение остальных объектов и модулей, интеграции с бухгалтерией и СЭД, выделенный менеджер.'}]},
+ {id:'pricing',type:'pricing',on:true,nav:'Тарифы',title:'Тарифы',lead:'Стоимость зависит от числа объектов, пользователей и выбранных модулей. Точный расчёт подготовим после демонстрации.',items:[
+  {title:'Объект',forw:'Для подрядчика на одном или нескольких объектах',price:'По запросу',sub:'облако, оплата за пользователей',points:'Документы и согласование\nЖурналы работ и АОСР\nВыгрузка XML для надзора\nМобильное приложение',hot:false,cta:'Обсудить'},
+  {title:'Компания',forw:'Для генподрядчика и застройщика с портфелем объектов',price:'По запросу',sub:'облако или ваш контур',points:'Все модули, включая сметы, бюджет и тендеры\nBIM‑модель и планирование\nТехнадзор с разграничением по организациям\nИнтеграции: SSO, СЭД, бухгалтерия',hot:true,cta:'Запросить демо'},
+  {title:'Холдинг',forw:'Для госзаказчиков и групп компаний с требованиями к контуру',price:'По запросу',sub:'установка в вашем контуре',points:'Установка в Kubernetes заказчика\nАудит безопасности и сопровождение ФСТЭК\nДоработка форм и отчётов под регламенты\nВыделенная команда внедрения',hot:false,cta:'Обсудить'}]},
+ {id:'faq',type:'faq',on:true,nav:'Вопросы',title:'Частые вопросы',lead:'',items:[
+  {q:'Госстройнадзор действительно принимает документацию из системы?',a:'Журналы и акты выгружаются в XML по схемам Минстроя, а подписи ставятся УКЭП через КриптоПро. Это тот формат, который ГОСТ Р 70108‑2025 определяет как основной для электронной исполнительной документации.'},
+  {q:'Работает ли система без интернета на площадке?',a:'Да. В мобильном приложении есть режим «Поле»: замечания с фото и факты работ записываются в очередь на устройстве и уходят на сервер, когда связь появляется. Офлайн‑копию объекта можно скачать заранее.'},
+  {q:'На каких языках интерфейс?',a:'Русский, английский и китайский. Язык переключается в настройках и запоминается.'},
+  {q:'Как защищены учётные записи?',a:'Двухфакторная аутентификация с резервными кодами, вход через корпоративный SSO и OAuth, список активных сессий с выходом на всех устройствах, журнал безопасности.'},
+  {q:'У нас уже есть сметы в Гранд‑Смете и графики в MS Project. Придётся переделывать?',a:'Нет. Сметы импортируются из Гранд‑Сметы, ARPS, GSFX и ГГЭ, графики читаются из файлов MS Project вместе с ресурсами и связями.'},
+  {q:'Можно ли установить платформу на наших серверах?',a:'Да. Платформа разворачивается в вашем Kubernetes единым набором конфигураций, подключается к вашему SSO и хранилищу файлов.'},
+  {q:'Подрядчики и технадзор увидят наши финансовые данные?',a:'Нет. Доступ разграничивается по ролям и организациям, поэтому подрядчик видит свои журналы и задачи, а сметы и бюджет остаются у заказчика.'},
+  {q:'Что с BIM, если модель весит несколько гигабайт?',a:'Модель конвертируется в лёгкий формат для браузера. Небольшие файлы обрабатываются на клиенте, тяжёлые конвертирует сервер.'}]},
+ {id:'demo',type:'demo',on:true,nav:'',title:'Покажем платформу на вашем объекте',lead:'Демонстрация занимает 45 минут. Приходите с типовым объектом и формами журналов, которые вы ведёте сейчас.',items:[
+  {text:'Пройдём сценарий от записи в журнале до выгрузки XML'},{text:'Покажем согласование по вашему маршруту'},{text:'Оценим объём миграции и сроки пилота'},{text:'Подготовим расчёт стоимости'}]}
+ ]
+};
+var EN={
+ hero:{kicker:'Design-Bid-Build, AIA contracts, CSI MasterFormat',
+  title:'Construction that closes out on time and gets paid on time',
+  lead:'One platform for the owner, the architect and the general contractor. Drawings, submittals and RFIs, daily logs, inspections, the schedule of values and the BIM model live in one system, so every pay application, change order and punch list is backed by a record instead of an email thread.',
+  cta1:'Request a demo', cta2:'What is inside', note:'Web, iOS and Android. Interface in English, Russian and Chinese. Cloud or your own environment.', img:''},
+ norms:'AIA G701 · G702 · G703 · G704\nCSI MasterFormat\nIBC Chapter 17 special inspections\nOSHA 29 CFR 1926\nISO 19650\nCPM scheduling',
+ sections:[
+ {id:'roles',type:'roles',on:true,nav:'Who it is for',title:'Owner, architect and GC on one set of records',lead:'Each party sees its own work and its own responsibility. The record is shared, so nobody argues about which revision was issued for construction.',items:[
+  {title:'Owner',pain:'Monthly reports arrive as spreadsheets and are already stale. Change orders pile up, and the reasons behind cost overruns surface only at the next pay application.',points:'Live progress on site: S-curve, work fronts, dated site panoramas\nSchedule of values, pay applications and change orders reconcile with the budget automatically\nPunch list and inspection findings are visible without a site visit'},
+  {title:'General contractor',pain:'Daily logs live on paper, submittals are tracked in a spreadsheet, and closeout means weeks of chasing as-builts, O&M manuals and lien waivers.',points:'Daily logs, punch lists and inspection reports are filled in from the site, on a phone\nSubmittal and RFI routing with GC review, architect review and stamped responses\nPay applications G702/G703 and closeout packages generated from the records'},
+  {title:'Architect and inspectors',pain:'RFIs come by email and get lost, submittal reviews have no audit trail, and special inspection reports sit in someone\'s inbox.',points:'RFIs and submittals with due dates, review stamps and a full history\nA punch item is pinned to a point on the drawing or an element of the BIM model\nSpecial inspection reports filed by discipline and tied to the schedule'}]},
+ {id:'flow',type:'flow',on:true,nav:'How it works',title:'From schematic design to occupancy without leaving the system',lead:'The modules follow the same order as a Design-Bid-Build project. Each stage produces the record the next one needs.',items:[
+  {title:'Design',text:'SD, DD and CD phases in the common data environment: revisions, purpose of issue from IFI to IFC, BIM model checks and quantity takeoff from the model.',out:'Construction documents issued for construction'},
+  {title:'Bid and award',text:'Bill of quantities by CSI MasterFormat division, invitations to subcontractors, bid forms, bid levelling and award. The winning bid converts into a contract.',out:'Awarded contract and schedule of values'},
+  {title:'Construction',text:'Daily logs, submittals and RFIs, special inspections, punch lists, CPM schedule with long-lead items. Progress is checked against the BIM model and site scans.',out:'Daily logs, inspection reports, RFIs, change events'},
+  {title:'Billing and changes',text:'Pay applications on G702/G703 built from the schedule of values, retainage tracking, change orders on G701, progress and final lien waivers.',out:'Pay applications, change orders, lien waivers'},
+  {title:'Closeout and operation',text:'As-builts, substantial completion on G704, permits and certificate of occupancy, then assets linked to BIM elements, preventive maintenance and warranties.',out:'Closeout package, asset register'}]},
+ {id:'modules',type:'modules',on:true,nav:'Modules',title:'Twelve core modules instead of twelve applications',lead:'Enable only what you need. Every module works with the same projects, people and documents. The full platform inventory is below.',items:[
+  {title:'Projects and sites',text:'A project catalogue with filters and cards, a project hub with the building, level, room hierarchy. Role dashboards for the project engineer, owner representative and GC superintendent. Risk register with a matrix and bow-tie analysis.',tags:'Project hub\nRisks\nRole dashboards',img:''},
+  {title:'Documents',text:'Common data environment per ISO 19650: folders with permissions, drawing register, revisions with purpose of issue, PDF comparison with highlighted differences, transmittals, package completeness check, register export to Excel.',tags:'Drawing register\nTransmittals\nRevision diff',img:''},
+  {title:'Submittals, RFIs and approvals',text:'A visual route designer for submittal review: GC review, then architect and engineer review with Approved, Approved as noted, Revise and resubmit stamps. RFIs with due dates. A red pencil for markups over the drawing. Deputies during leave.',tags:'Submittals\nRFIs\nReview stamps',img:''},
+  {title:'Daily logs and inspections',text:'Daily logs with crew counts, equipment, deliveries, delays and weather. Special inspection reports by discipline, incoming material inspection with mill certs and test results, concealed-work inspection acts, progress billing acts.',tags:'Daily log\nSpecial inspections\nMaterial inspection',img:''},
+  {title:'Punch lists and field observations',text:'Observations pinned to the drawing, notices to subcontractors from form templates, subcontractor responses, calling an inspector for concealed work, quality checklists, OSHA 29 CFR 1926 violation notices, voice capture of deviations.',tags:'Punch list\nOSHA notices\nChecklists',img:''},
+  {title:'Estimates, budget and pay applications',text:'Estimates by MasterFormat division with quantity takeoff from BIM, budget plan and actual by cost code, schedule of values, pay applications G702/G703, retainage, change orders G701, lien waivers, cost to complete, Earned Value.',tags:'SOV\nG702/G703\nRetainage',img:''},
+  {title:'Bids and contracts',text:'A bid package from publication to award: invitations, bid forms, bid levelling with unit normalisation, AI bid analysis, conversion into a contract. Contracts with change orders, subcontracts, revisions and reminders.',tags:'Bid levelling\nAI analysis\nChange orders',img:''},
+  {title:'BIM model',text:'IFC models in the browser: selection, properties, sections, element editing, work zones, MEP clash checks and comparison of the model with a site scan. On mobile the model opens as a 3D scene.',tags:'IFC\nClash checks\nScan-to-BIM',img:''},
+  {title:'Planning and time',text:'CPM schedules with MS Project import, critical path and long-lead items, kanban task boards, a calendar with assignee load, timesheets with crew hour posting and productivity reports, work fronts.',tags:'CPM\nKanban\nTimesheets',img:''},
+  {title:'Site and field',text:'A daily site log with people, equipment and weather, photo capture, punch list. Offline superintendent mode: observations and work quantities without a connection, sync when the network returns. Digital site plan.',tags:'Offline\nPunch list\nSite plan',img:''},
+  {title:'Collaboration',text:'Chats with reactions and pinned messages, video calls with live captions, meetings with agenda, action items and minutes, notifications with quiet hours, global search.',tags:'Chats\nCalls\nMinutes',img:''},
+  {title:'Procurement, permits and operation',text:'Warehouse with stock, movements and stocktaking, a delivery log with supplier rating and long-lead item tracking. Permits with the AHJ from application to certificate of occupancy. After closeout: assets linked to BIM elements, work requests, preventive maintenance, warranties.',tags:'Long-lead items\nPermits\nAssets',img:''}]},
+ {id:'gallery',type:'gallery',on:true,nav:'Interface',title:'This is what the platform looks like',lead:'Screens from the working version: logs, approvals, the BIM model and the schedule.',items:[]},
+ {id:'catalog',type:'catalog',on:true,nav:'All modules',title:'Full platform inventory',lead:'Everything that exists in the client today, grouped as in the main menu. Click a module to expand its capabilities.',items:[
+  {group:'Site and field',title:'Sites',text:'A catalogue of the workspace sites with search, filters, list and grid views.',points:'Site creation with initial module provisioning\nQuick filters and a filter sidebar\n3D building visualisation and a built-in PDF viewer\nNetwork schedule tab'},
+  {group:'Site and field',title:'Site hub',text:'The core of construction control: portfolios, sites, logs and document sets with role dashboards.',points:'Dashboards for the technical office, owner supervision and contractor supervision\nSite policies: a critical deviation blocks hidden-work acts and stage acceptance\nDocument sets with version history\nSite audit trail'},
+  {group:'Site and field',title:'Field log',text:'Daily site log, photo capture and acceptance.',points:'Daily entries: people, equipment, deliveries, downtime, weather\nClosing the day with draft and closed statuses\nPunch list: remark, fixed, accepted\nSite photo gallery with captions'},
+  {group:'Site and field',title:'Field offline',text:'Offline foreman mode on the phone: work continues without a connection.',points:'Remarks with photos and work facts are queued on the device\nSync every 30 seconds once the network returns\nAn offline copy of the site is downloaded in advance\nPhotos go first, then cards, dependencies are respected'},
+  {group:'Site and field',title:'Work fronts',text:'Tracking work fronts and completed quantities per site.',points:'Creating fronts and completion records\nGenerating a bill of quantities\nDashboard: total, active, progress, records'},
+  {group:'Site and field',title:'Digital master plan',text:'Territory information registers and geo-objects on the map.',points:'Registers and geo-objects with coordinates\nSearch near a point\nLayer visibility'},
+  {group:'Site and field',title:'Equipment',text:'Register of the site engineering equipment.',points:'Equipment classifiers\nPassports and certificates per unit\nComponents and dashboard statistics'},
+  {group:'Site and field',title:'Productivity',text:'Output per site: hours, quantities, rates.',points:'Productivity summary per project\nProduction rate\nThe widget embeds in other screens'},
+  {group:'Documents and contracts',title:'Documents',text:'Common data environment: MDR register, document cards, versions and transmittals.',points:'New version, restore, PDF version comparison with highlighted differences\nTransmittals from selected documents, package completeness check\nApproval from the card: stages, delegation, bulk approve\nAnnotations with replies, stamps, folder permissions, register export to Excel\nAttaching IFC models to a document'},
+  {group:'Documents and contracts',title:'Folders',text:'A file tree with permissions, tags and versions.',points:'Batch create, move and delete\nPermissions, shared links and their revocation\nStructure export and import, ZIP download\nFavourites, tags, change subscriptions, storage quota'},
+  {group:'Documents and contracts',title:'Approvals',text:'Approval routes with a visual designer and an inbox.',points:'Route designer: stages, transitions, conditions, minimap\nCloning, validation and enabling templates\nRed pencil: remarks over the document, remark import\nNormative control, rejection, return for rework\nDeputies and delegation during absence'},
+  {group:'Documents and contracts',title:'Electronic signature',text:'Signing documents with a qualified e-signature and server-side signing routes.',points:'CryptoPro CAdES in the browser, certificate selection\nXML canonicalisation matches the server byte for byte\nMy signature queue, sign or reject a step\nServer-side signature verification'},
+  {group:'Documents and contracts',title:'QR stamp',text:'A QR-code stamp on the document for authenticity checks.',points:'Generating and applying the stamp\nOverlaying the stamp on an existing document\nCalled from the document card and the signing dialog'},
+  {group:'Documents and contracts',title:'Form templates',text:'A designer for DOCX, XLSX and JSON report templates with generation of filled forms.',points:'Publishing, cloning, archiving templates\nMapping variables to data sources with suggestions\nForm generation and generation history\nVisual report designer'},
+  {group:'Documents and contracts',title:'Office documents',text:'A built-in editor for documents and spreadsheets with collaboration.',points:'Real-time co-editing\nAccess roles: reader, commenter, editor, administrator\nExport to DOCX, PDF, RTF, HTML, TXT, EPUB, XLSX\nFormulas, sheets, charts, pivot tables'},
+  {group:'Documents and contracts',title:'Contracts',text:'A contract register with a hierarchy of addenda and subcontracts.',points:'Statuses: closing, annulment, suspension, resumption\nFile versions and version comparison, closing documents\nContract approval route, reminders, calendar\nAI analysis of the contract text, activity log'},
+  {group:'Documents and contracts',title:'Permits',text:'A permit register with the AHJ, from application to certificate of occupancy.',points:'Submit, review, issue, reject, revoke, extend\nExpiring permits register and status statistics\nFilters, sorting, comments'},
+  {group:'Documents and contracts',title:'Change events and change orders',text:'A register of change events per project that convert into change orders.',points:'A change event with estimate lines\nLifecycle status transitions\nConversion into an addendum or an order'},
+  {group:'Quality control and as-built documentation',title:'General work log',text:'The electronic general log of works in six sections with signing and PDF, the master record behind daily logs.',points:'Sections: personnel, special logs, works, control, as-built docs, supervision data\nSigning, closing with validation, reopening\nCopying yesterday\'s entries\nPDF generation, audit'},
+  {group:'Quality control and as-built documentation',title:'Progress billing acts',text:'Acts of completed work and cost certificates that feed pay applications.',points:'Creating and signing KS-2\nSelecting KS-2 acts for a KS-3\nStatements and the KS-3 report'},
+  {group:'Quality control and as-built documentation',title:'Concealed-work inspection acts',text:'Inspection acts for work that will be covered up.',points:'An act from a general work log entry\nCompleteness rules: work type, required documents\nSignature queue, signatures, sending for approval\nAct and inventory export, annulment'},
+  {group:'Quality control and as-built documentation',title:'Incoming inspection',text:'The incoming material inspection log and quality documents.',points:'Entries, signing, an act from selected entries\nGo or no-go decision, material gate\nMaterial traceability chain\nOCR of quality documents, policies and policy templates'},
+  {group:'Quality control and as-built documentation',title:'Construction control',text:'Control stages, deviations, acceptance and site indicators.',points:'Stages with inspector, deadlines and progression\nIncoming inspection with a signed act, critical gates\nDeviations: record, fix, close\nAcceptance: submit, approve, reject\nVoice assistant for recording a deviation\nInspection calendar, photo gallery, drawing codes, site dashboard'},
+  {group:'Quality control and as-built documentation',title:'Observations and notices',text:'Field observations, notices to subcontractors and concealed-work inspections.',points:'A remark is tied to a point on the drawing, photo gallery\nA directive from selected remarks using a form template\nContractor response: submit, accept, reject\nInspector call by slots, opening hidden work\nOperational control schemes, signing the inspection act'},
+  {group:'Quality control and as-built documentation',title:'Checklists',text:'Running template-based checklists with acceptance.',points:'Template library: import, publish, archive, clone\nAssignment, answers and attachments\nSubmit, approve, reject, return for rework\nHistory and summary'},
+  {group:'Planning and finance',title:'Tasks',text:'Kanban boards: workspaces, boards, lists, cards.',points:'Instant card drag and drop\nComments, labels, board members\nBoard search'},
+  {group:'Planning and finance',title:'Calendar',text:'Events and tasks with assignee load.',points:'View modes and period navigation\nCreating, moving and deleting events\nLoad indicator, task dashboard'},
+  {group:'Planning and finance',title:'Timesheet',text:'Time and output tracking.',points:'My timesheet, employee timesheets for the manager\nPosting hours for a crew\nSending for approval, productivity report'},
+  {group:'Planning and finance',title:'Network schedules',text:'Work schedules with an interactive planner.',points:'Schedules per site, the main schedule\nPlanner with critical path and resources\nSchedule tasks and dictionaries'},
+  {group:'Planning and finance',title:'Estimates',text:'An estimate register with import from estimating software.',points:'Import of Grand-Smeta XML, ARPS, GSFX, GGE\nRecalculation, comparison, corrections, automatic line classification\nExport to Excel and ARPS\nM-29, owner-supplied materials, transport and delivery terms\nTender from an estimate, sending for approval'},
+  {group:'Planning and finance',title:'Budget',text:'The financial loop of the project.',points:'Lines: plan, actual, remaining, forecast, variance\nPayment schedule, confirming and moving payments\nSync with the estimate, budget snapshots\nP&L, working capital, VAT, completion forecast, Earned Value'},
+  {group:'Planning and finance',title:'Pay applications',text:'Schedule of values, pay applications, retainage and invoice review.',points:'Schedule of Values and pay applications\nRetainage release with confirmation\nCost-to-Complete, approved changes, invoice review'},
+  {group:'Planning and finance',title:'Risks',text:'The project risk register.',points:'Risk matrix, bow-tie diagram\nPDF report export\nCreate, edit, delete'},
+  {group:'Procurement and supply',title:'Tenders',text:'The tender cycle from publication to contract.',points:'Publication, bidding, evaluation, award\nInvitations, including bulk ones, shortlist\nBid forms: template, copy, CSV import\nBid levelling, unit normalisation\nAI bid analysis, conversion into a contract, audit'},
+  {group:'Procurement and supply',title:'Warehouse and procurement',text:'Material stock accounting and a delivery log.',points:'Stock, movements, items, limit cards\nIssue, receipt, transfer, stocktaking\nWarehouse types: on site, central, tool store\nDeliveries, incoming inspection, claims, supplier rating'},
+  {group:'Procurement and supply',title:'Companies',text:'Project participants, employees, roles and compliance.',points:'Roles: owner, construction control, developer\nEmployees and user linking\nRequirements register with deadlines'},
+  {group:'Procurement and supply',title:'Contractor cabinet',text:'A personal cabinet for the contracting company.',points:'Overview, contracts, personnel, schedule, documents, requests\nSite access requests\nSubmitting task facts'},
+  {group:'Collaboration and analytics',title:'Messages',text:'Private and group chats.',points:'Replies, editing, pinning, reactions\nAttachments, members with roles, ban and mute\nReal-time updates'},
+  {group:'Collaboration and analytics',title:'Calls',text:'Audio and video calls inside the platform.',points:'Screen sharing\nLive captions\nAudio recording'},
+  {group:'Collaboration and analytics',title:'Meetings',text:'Agenda, action items and minutes.',points:'Statuses from scheduled to published minutes\nAgenda items: resolved, discussed, deferred\nOverdue action items open the next meeting\nCarry-over of unresolved items'},
+  {group:'Collaboration and analytics',title:'Notifications',text:'Alerts, approvals and push.',points:'Mark as read, delete, deep link to the entity\nQuiet hours on a schedule, categories and types\nSite subscriptions'},
+  {group:'Collaboration and analytics',title:'Search',text:'Global search across entities.',points:'Type filters: documents, tasks, projects\nJump to the found entity'},
+  {group:'Collaboration and analytics',title:'Dashboards',text:'Configurable widget dashboards and an interactive map.',points:'Adding and resizing widgets\nReset to the default layout\nSite map'},
+  {group:'Collaboration and analytics',title:'Analytics',text:'Reports and dashboards with forecasting.',points:'Connecting sources and querying data\nHolt-Winters forecast\nAs-built documentation report, map of Russia'},
+  {group:'Collaboration and analytics',title:'Report designer',text:'Visual reports built from widgets.',points:'KPI, bars, lines, pie, funnel, waterfall, table, pivot\nTemplates: project overview, budget, permits, risks, schedule\nLive preview'},
+  {group:'Collaboration and analytics',title:'Analyst assistant',text:'A plain-language question becomes a data breakdown with sources.',points:'Step-by-step reasoning and source links for every figure\nBusiness remark breakdown\nConversation history'},
+  {group:'Collaboration and analytics',title:'BIM viewer',text:'The model in the browser and on mobile.',points:'Web viewer by document or link\n3D scene on the phone\nPoint clouds'},
+  {group:'Administration and security',title:'Administration',text:'A single settings panel for the platform.',points:'Roles, permissions and access policies\nLDAP groups, user and site management\nChecklist designer and work types\nDocument numbering, security log, transition log\nApproval matrices with AI generation'},
+  {group:'Administration and security',title:'Dictionaries',text:'Custom dictionaries with attributes.',points:'Import, export and sync from Excel\nReference attributes between dictionaries\nCode generation, field schema designer'},
+  {group:'Administration and security',title:'Sign-in and security',text:'Authentication and account protection.',points:'Two-factor authentication with backup codes\nOAuth sign-in, provider linking\nActive sessions and sign-out on all devices\nPassword recovery, email confirmation'},
+  {group:'Administration and security',title:'Organisation',text:'Sign-up, organisation console and usage.',points:'Sign-up and email confirmation\nInviting users and roles\nSwitching organisations, usage metrics'},
+  {group:'Administration and security',title:'Workspace',text:'Organisation context, team and brand book.',points:'Members and permissions\nColours and logo in the interface\nSite layout: apartment and section matrix'},
+  {group:'Administration and security',title:'Licence',text:'Company licence status and validity.',points:'Active or expired, validity period\nLicence details'}]},
+ {id:'band',type:'band',on:true,nav:'',title:'',lead:'',items:[
+  {title:'A BIM model tied to the site',lead:'The model does not sit as a separate file with the designer. It opens in the browser and is tied to logs, the estimate and the schedule.',style:'steel',points:'**Heavy IFC in the browser.** Selection, isolation, properties, measurements, sections and 2D plans from the model without installing software.\n**Work zones on the model.** Installation zones are drawn in 3D and linked to the level-three schedule.\n**Scan against model.** A site scan is aligned with the model, deviations are highlighted as a heat map, progress flows into the planner.\n**Remarks on the element.** The supervisor pins a remark to the model element, not somewhere on the seventh floor.'},
+  {title:'An assistant that calculates rather than invents',lead:'Models run inside your perimeter. A person always checks the result, and calculations stay deterministic.',style:'signal',points:'**A data question in plain language.** "How much concrete was placed in August on building 2" becomes a database query and an answer with figures.\n**Normative control of design documentation.** A check against GOST R 21.101 with a conclusion per section.\n**Classification on upload.** Document type and classifier code are detected automatically.\n**Meeting minutes.** Transcription, speaker separation and structured minutes with action items.\n**Work rate setting.** Labour hours from standards, a text mode only for non-standard cases.'}]},
+ {id:'compliance',type:'compliance',on:true,nav:'Standards',title:'Built around US contract documents and codes',lead:'The platform core is shared, and the jurisdiction is a pluggable adapter: the estimating engine, document generator and signature provider are switched per project.',items:[
+  {title:'AIA G702 / G703',text:'Pay applications and continuation sheets built from the schedule of values, with retainage and previously certified amounts.'},
+  {title:'AIA G701 and G704',text:'Change orders with revised contract sum and time, and the certificate of substantial completion at closeout.'},
+  {title:'CSI MasterFormat',text:'Bills of quantities, cost codes and bid forms by MasterFormat division instead of national unit rate books.'},
+  {title:'Submittals and RFIs',text:'Shop drawings, product data and samples with two-stage review and standard stamps. RFIs with due dates and history.'},
+  {title:'IBC Chapter 17',text:'Special inspection reports by discipline, filed in the CDE and tied to the schedule.'},
+  {title:'OSHA 29 CFR 1926',text:'A dedicated violation notice type referencing code sections for fast citations on site.'},
+  {title:'Lien waivers',text:'Progress and final lien waivers generated from form templates before retainage release.'},
+  {title:'Units and formats',text:'Feet and inches in the field, meters in BIM, MM/DD/YYYY dates, USD, all US time zones.'}]},
+ {id:'deploy',type:'deploy',on:true,nav:'',title:'',lead:'',items:[
+  {title:'Cloud',text:'Launch in days, updates without your involvement. Hosted in a US region.'},
+  {title:'Your environment',text:'Installation in your Kubernetes or on your servers. Full control over data, integration with your SSO and storage.'}]},
+ {id:'rollout',type:'rollout',on:true,nav:'',title:'Rollout that does not stop the job',lead:'We start with one project and the one process that hurts most, usually submittals or pay applications. We expand once the team is already working in the system.',items:[
+  {title:'Demonstration',text:'We show the platform on your scenarios: a typical project, your daily log format, your submittal review chain.'},
+  {title:'Pilot on a project',text:'One project, one or two modules. We load the drawing set, set up roles, cost codes and review routes.'},
+  {title:'Migration and training',text:'Import of estimates, MS Project schedules and the document archive. Training superintendents to work from the site.'},
+  {title:'Launch and support',text:'Connecting the remaining projects and modules, integrations with accounting and document systems, a dedicated manager.'}]},
+ {id:'pricing',type:'pricing',on:true,nav:'Pricing',title:'Pricing',lead:'The cost depends on the number of projects, users and selected modules. We prepare an exact quote after the demonstration.',items:[
+  {title:'Project',forw:'For a subcontractor or GC on one or several projects',price:'On request',sub:'cloud, per user',points:'Documents, submittals and RFIs\nDaily logs and punch lists\nPay applications G702/G703\nMobile app',hot:false,cta:'Discuss'},
+  {title:'Company',forw:'For a general contractor or developer with a portfolio of projects',price:'On request',sub:'cloud or your environment',points:'All modules, including estimates, budget and bidding\nBIM model and CPM planning\nInspections with separation by company\nIntegrations: SSO, document systems, accounting',hot:true,cta:'Request a demo'},
+  {title:'Enterprise',forw:'For public owners and groups of companies with hosting requirements',price:'On request',sub:'installed in your environment',points:'Installation in your Kubernetes\nSecurity review and compliance support\nCustom forms and reports for your procedures\nA dedicated rollout team',hot:false,cta:'Discuss'}]},
+ {id:'faq',type:'faq',on:true,nav:'FAQ',title:'Frequently asked questions',lead:'',items:[
+  {q:'Does it produce AIA pay applications?',a:'Yes. G702 and G703 are generated from the schedule of values with retainage and previously certified amounts, and G701 change orders and the G704 certificate of substantial completion come from the same records.'},
+  {q:'How are submittals and RFIs handled?',a:'Submittals go through a configurable review route, typically GC review followed by architect and engineer review, with Approved, Approved as noted, Rejected and Revise and resubmit stamps. RFIs carry due dates, assignees and a full history.'},
+  {q:'Does the system work without internet on site?',a:'Yes. The mobile app has a Field mode: observations with photos and work quantities are queued on the device and sent to the server when the connection returns. An offline copy of the project can be downloaded in advance.'},
+  {q:'Which units and formats are used?',a:'Feet and inches in the field, meters inside the BIM model, MM/DD/YYYY dates, USD, and every US time zone. The interface is available in English, Russian and Chinese.'},
+  {q:'We already have estimates and schedules in MS Project. Do we have to redo them?',a:'No. Schedules are read from MS Project files together with resources and links, and estimates import from common estimating formats or as spreadsheets by MasterFormat division.'},
+  {q:'Can the platform be installed on our servers?',a:'Yes. The platform deploys into your Kubernetes as a single set of configurations and connects to your SSO and file storage.'},
+  {q:'Will subcontractors and inspectors see our financial data?',a:'No. Access is separated by roles and companies, so a subcontractor sees its own logs, submittals and tasks while the schedule of values and budget stay with the GC and the owner.'},
+  {q:'How are accounts protected?',a:'Two-factor authentication with backup codes, corporate SSO and OAuth sign-in, a list of active sessions with sign-out on all devices, a security log.'},
+  {q:'What about BIM when the model weighs several gigabytes?',a:'The model is converted into a lightweight browser format. Small files are processed on the client, heavy ones are converted by the server.'}]},
+ {id:'demo',type:'demo',on:true,nav:'',title:'We will show the platform on your project',lead:'The demonstration takes 45 minutes. Bring a typical project and the daily log and submittal formats you use today.',items:[
+  {text:'We walk through the scenario from a daily log entry to a pay application'},{text:'We show submittal review along your route'},{text:'We estimate the migration scope and pilot timeline'},{text:'We prepare a quote'}]}
+ ]
+};
+var UI={
+ ru:{norms:'Работает по нормам',out:'На выходе',step:'Шаг ',footer:'платформа управления строительством',admin:'Администрирование',galEmpty:'Скриншоты ещё не добавлены. Откройте «Администрирование» внизу страницы, загрузите изображения и добавьте их в этот раздел.',
+  fName:'Имя',fCompany:'Компания',fEmail:'Рабочий email',fPhone:'Телефон',fRole:'Ваша роль',roles:'Заказчик или застройщик|Генподрядчик|Подрядчик|Технадзор|Проектировщик|Другое',fMsg:'Что хотите увидеть',fMsgPh:'Например: выгрузка ОЖР в госстройнадзор и согласование АОСР',fSend:'Запросить демо',fFine:'Ответим в течение рабочего дня. Данные используются только для связи по вашей заявке.',fSent:'Заявка подготовлена. Откроется письмо в вашей почте, нажмите «Отправить».',
+  mName:'Имя',mCompany:'Компания',mPhone:'Телефон',mRole:'Роль',mSubj:'Запрос демо',mFrom:'от',lang:'Язык'},
+ en:{norms:'Built around',out:'Output',step:'Step ',footer:'construction management platform',admin:'Administration',galEmpty:'No screenshots yet. Open Administration at the bottom of the page, upload images and add them to this section.',
+  fName:'Name',fCompany:'Company',fEmail:'Work email',fPhone:'Phone',fRole:'Your role',roles:'Owner or developer|General contractor|Subcontractor|Architect or engineer|Inspector|Other',fMsg:'What would you like to see',fMsgPh:'For example: submittal review and pay applications G702/G703',fSend:'Request a demo',fFine:'We reply within one working day. Your data is used only to respond to this request.',fSent:'Request prepared. An email will open in your mail client, press Send.',
+  mName:'Name',mCompany:'Company',mPhone:'Phone',mRole:'Role',mSubj:'Demo request',mFrom:'from',lang:'Language'}
+};
+var LANG_NAMES={ru:'Русский',en:'English'};
+var DEFAULT={v:3,brand:'StroykaBuild',contact:'sales@stroykabuild.ru',colors:{signal:'#E4572E',steel:'#1F4E79'},defaultLang:'ru',content:{ru:RU,en:EN},images:[]};
+
+var TYPES={
+ roles:{label:'Роли',fields:[['title','Роль'],['pain','Боль','textarea'],['points','Что даёт, по строке','textarea']],blank:{title:'Новая роль',pain:'',points:''}},
+ flow:{label:'Этапы',fields:[['title','Этап'],['text','Описание','textarea'],['out','На выходе']],blank:{title:'Этап',text:'',out:''}},
+ modules:{label:'Модули',fields:[['title','Модуль'],['text','Описание','textarea'],['tags','Теги, по строке','textarea'],['img','Скриншот','image']],blank:{title:'Модуль',text:'',tags:'',img:''}},
+ catalog:{label:'Модули',fields:[['group','Группа'],['title','Модуль'],['text','Что это, одно предложение','textarea'],['points','Возможности, по строке','textarea']],blank:{group:'',title:'Модуль',text:'',points:''}},
+ gallery:{label:'Скриншоты',fields:[['img','Скриншот','image'],['caption','Подпись','textarea']],blank:{img:'',caption:''}},
+ band:{label:'Колонки',fields:[['title','Заголовок'],['lead','Подзаголовок','textarea'],['points','Пункты, по строке. **Жирный** для акцента','textarea'],['style','Маркер','select','steel:Квадрат|signal:Точка']],blank:{title:'Колонка',lead:'',points:'',style:'steel'}},
+ compliance:{label:'Требования',fields:[['title','Норма'],['text','Описание','textarea']],blank:{title:'',text:''}},
+ deploy:{label:'Варианты',fields:[['title','Вариант'],['text','Описание','textarea']],blank:{title:'',text:''}},
+ rollout:{label:'Шаги',fields:[['title','Шаг'],['text','Описание','textarea']],blank:{title:'',text:''}},
+ pricing:{label:'Тарифы',fields:[['title','Тариф'],['forw','Для кого'],['price','Цена'],['sub','Пояснение под ценой'],['points','Что входит, по строке','textarea'],['cta','Текст кнопки'],['hot','Выделить тариф','check']],blank:{title:'Тариф',forw:'',price:'По запросу',sub:'',points:'',cta:'Обсудить',hot:false}},
+ faq:{label:'Вопросы',fields:[['q','Вопрос'],['a','Ответ','textarea']],blank:{q:'',a:''}},
+ demo:{label:'Что будет на демо',fields:[['text','Пункт']],blank:{text:''}}
+};
+var TYPE_NAMES={roles:'Роли и боли',flow:'Этапы стройки',modules:'Модули',gallery:'Галерея скриншотов',catalog:'Каталог модулей',band:'Две колонки',compliance:'Соответствие нормам',deploy:'Облако или контур',rollout:'Внедрение',pricing:'Тарифы',faq:'Вопросы и ответы',demo:'Форма демо'};
+
+/* ---------- state ---------- */
+var state, pristine, lang='ru';
+function C(){return state.content[lang]||state.content[state.defaultLang];}
+function T(){return UI[lang]||UI.ru;}
+function L(){return 'content.'+lang+'.';}
+function load(){
+  var el=document.getElementById('site-data'), parsed=null;
+  try{ parsed=JSON.parse(el.textContent||'{}'); }catch(e){}
+  state=(parsed&&parsed.v)?parsed:JSON.parse(JSON.stringify(DEFAULT));
+  if(state.v<2&&state.sections){
+    if(!state.sections.some(function(x){return x.type==='catalog';})){
+      var c=JSON.parse(JSON.stringify(RU.sections.filter(function(x){return x.type==='catalog';})[0]));
+      var i=state.sections.findIndex(function(x){return x.type==='gallery';});
+      state.sections.splice(i<0?state.sections.length:i+1,0,c);
+    }
+    state.v=2;
+  }
+  if(state.v<3){
+    state.content={ru:{hero:state.hero,norms:state.norms,sections:state.sections},en:JSON.parse(JSON.stringify(EN))};
+    state.content.en.hero.img=state.hero.img||'';
+    delete state.hero; delete state.norms; delete state.sections;
+    state.defaultLang='ru'; state.v=3;
+  }
+  pristine=JSON.stringify(state);
+  var q=null; try{ q=new URLSearchParams(location.search).get('lang'); }catch(e){}
+  var saved=null; try{ saved=localStorage.getItem('sb-lang'); }catch(e){}
+  lang=q||saved||state.defaultLang; if(!state.content[lang])lang=state.defaultLang;
+  document.documentElement.lang=lang;
+}
+function setLang(l){
+  if(!state.content[l])return; lang=l; document.documentElement.lang=l;
+  try{ localStorage.setItem('sb-lang',l); }catch(e){}
+  render(); renderAdmin();
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmt(s){return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
+function lines(s){return String(s||'').split('\n').map(function(x){return x.trim();}).filter(Boolean);}
+function img(id){for(var i=0;i<state.images.length;i++)if(state.images[i].id===id)return state.images[i];return null;}
+function imgTag(id,cls){var im=img(id);return im?'<img src="'+im.src+'" alt="'+esc(im.name)+'" width="'+im.w+'" height="'+im.h+'"'+(cls?' class="'+cls+'"':'')+' loading="lazy">':'';}
+
+/* ---------- page templates ---------- */
+var MOCK={
+ ru:{aria:'Пример экрана: общий журнал работ',url:'app / ЖК Северный / Корпус 2 / ОЖР',nav:'Документы|Согласование|Журналы работ|Технадзор|Сметы и бюджет|BIM‑модель|График',navOn:2,title:'Общий журнал работ · раздел 3',sub:'Корпус 2, этаж 7',cols:'Дата|Работы|Объём|Статус',
+  rows:[['28.08','Армирование плиты перекрытия, оси 3–7','4,2 т','ok','Подписано'],['29.08','Бетонирование плиты, B25 W6','96 м³','ok','Подписано'],['01.09','Уход за бетоном, журнал по XSD','3 сут','steel','На проверке'],['02.09','АОСР № 47: скрытые работы по армированию','1 акт','warn','Ждёт технадзор'],['03.09','Кладка наружных стен, оси А–Д','38 м³','steel','Черновик']],
+  stamp:'Подписано УКЭП',stampSub:'03.09.2026 14:12 · КриптоПро'},
+ en:{aria:'Sample screen: daily log',url:'app / Riverside Tower / Building 2 / Daily log',nav:'Documents|Submittals and RFIs|Daily logs|Inspections|Budget and pay apps|BIM model|Schedule',navOn:2,title:'Daily log · Sep 3, 2026',sub:'Building 2, level 7',cols:'Date|Work|Qty|Status',
+  rows:[['08/28','Slab reinforcement, gridlines 3–7','4.6 tons','ok','Signed'],['08/29','Slab pour, 4,000 psi','125 cu yd','ok','Signed'],['09/01','Concrete curing log','3 days','steel','In review'],['09/02','Concealed-work inspection 47: rebar','1 report','warn','Awaiting inspector'],['09/03','Exterior CMU walls, gridlines A–D','1,350 sq ft','steel','Draft']],
+  stamp:'Approved',stampSub:'09/03/2026 2:12 PM · e-signature'}
+};
+function mockScreen(){
+ var m=MOCK[lang]||MOCK.ru;
+ return '<div class="screen" aria-label="'+esc(m.aria)+'"><div class="bar"><i></i><i></i><i></i><span class="url">'+esc(m.url)+'</span></div><div class="body"><aside>'+m.nav.split('|').map(function(n,i){return '<div'+(i===m.navOn?' class="on"':'')+'>'+esc(n)+'</div>';}).join('')+'</aside><main><div class="ttl"><b>'+esc(m.title)+'</b><span>'+esc(m.sub)+'</span></div><table><thead><tr>'+m.cols.split('|').map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>'+
+ m.rows.map(function(r){return '<tr><td class="num">'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td class="num">'+esc(r[2])+'</td><td><span class="pill '+r[3]+'">'+esc(r[4])+'</span></td></tr>';}).join('')+
+ '</tbody></table><div class="stamp">'+esc(m.stamp)+'<small>'+esc(m.stampSub)+'</small></div></main></div></div>';
+}
+function head(s){ if(!s.title&&!s.lead)return ''; return '<div class="sec-head">'+(s.title?'<h2>'+esc(s.title)+'</h2>':'')+(s.lead?'<p class="lead">'+fmt(s.lead)+'</p>':'')+'</div>'; }
+var R={
+ roles:function(s){return head(s)+'<div class="roles">'+s.items.map(function(it){return '<div class="role"><h3>'+esc(it.title)+'</h3>'+(it.pain?'<p class="pain">'+fmt(it.pain)+'</p>':'')+'<ul>'+lines(it.points).map(function(p){return '<li>'+fmt(p)+'</li>';}).join('')+'</ul></div>';}).join('')+'</div>';},
+ flow:function(s){return head(s)+'<div class="flow">'+s.items.map(function(it){return '<div class="step"><h3>'+esc(it.title)+'</h3><p>'+fmt(it.text)+'</p>'+(it.out?'<div class="out"><b>'+esc(T().out)+'</b>'+esc(it.out)+'</div>':'')+'</div>';}).join('')+'</div>';},
+ modules:function(s){return head(s)+'<div class="mods">'+s.items.map(function(it){return '<div class="mod">'+(img(it.img)?'<div class="mimg">'+imgTag(it.img)+'</div>':'')+'<h3>'+esc(it.title)+'</h3><p>'+fmt(it.text)+'</p><div class="tags">'+lines(it.tags).map(function(t){return '<span>'+esc(t)+'</span>';}).join('')+'</div></div>';}).join('')+'</div>';},
+ catalog:function(s){var groups=[];s.items.forEach(function(it){var g=it.group||'';if(groups.indexOf(g)<0)groups.push(g);});return head(s)+groups.map(function(g){var its=s.items.filter(function(it){return (it.group||'')===g;});return '<div class="cgroup">'+(g?'<h3>'+esc(g)+'<small>'+its.length+'</small></h3>':'')+'<div class="cgrid">'+its.map(function(it){return '<details class="cf"><summary><b>'+esc(it.title)+'</b><span>'+fmt(it.text)+'</span></summary><ul>'+lines(it.points).map(function(p){return '<li>'+fmt(p)+'</li>';}).join('')+'</ul></details>';}).join('')+'</div></div>';}).join('');},
+ gallery:function(s){var its=s.items.filter(function(it){return img(it.img);});return head(s)+'<div class="gal">'+(its.length?its.map(function(it){return '<figure><div class="shot">'+imgTag(it.img)+'</div>'+(it.caption?'<figcaption>'+fmt(it.caption)+'</figcaption>':'')+'</figure>';}).join(''):'<div class="empty">'+esc(T().galEmpty)+'</div>')+'</div>';},
+ band:function(s){return head(s)+'<div class="band">'+s.items.map(function(it){return '<div><h2>'+esc(it.title)+'</h2>'+(it.lead?'<p class="lead">'+fmt(it.lead)+'</p>':'')+'<ul class="'+(it.style==='signal'?'signal':'')+'">'+lines(it.points).map(function(p){return '<li>'+fmt(p)+'</li>';}).join('')+'</ul></div>';}).join('')+'</div>';},
+ compliance:function(s){return head(s)+'<div class="comp">'+s.items.map(function(it){return '<div><b>'+esc(it.title)+'</b><p>'+fmt(it.text)+'</p></div>';}).join('')+'</div>';},
+ deploy:function(s){return head(s)+'<div class="deploy">'+s.items.map(function(it){return '<div><h3>'+esc(it.title)+'</h3><p>'+fmt(it.text)+'</p></div>';}).join('')+'</div>';},
+ rollout:function(s){return head(s)+'<div class="roll">'+s.items.map(function(it){return '<div><h3>'+esc(it.title)+'</h3><p>'+fmt(it.text)+'</p></div>';}).join('')+'</div>';},
+ pricing:function(s){return head(s)+'<div class="plans">'+s.items.map(function(it){return '<div class="plan'+(it.hot?' hot':'')+'"><h3>'+esc(it.title)+'</h3><p class="for">'+esc(it.forw)+'</p><div class="price">'+esc(it.price)+(it.sub?'<small>'+esc(it.sub)+'</small>':'')+'</div><ul>'+lines(it.points).map(function(p){return '<li>'+fmt(p)+'</li>';}).join('')+'</ul><a class="btn '+(it.hot?'btn-primary':'btn-ghost')+'" href="#demo">'+esc(it.cta||'Обсудить')+'</a></div>';}).join('')+'</div>';},
+ faq:function(s){return head(s)+'<div class="faq">'+s.items.map(function(it){return '<details><summary>'+esc(it.q)+'</summary><p>'+fmt(it.a)+'</p></details>';}).join('')+'</div>';},
+ demo:function(s){return '<div><h2>'+esc(s.title)+'</h2><p class="lead">'+fmt(s.lead)+'</p><ul>'+s.items.map(function(it){return '<li>'+fmt(it.text)+'</li>';}).join('')+'</ul></div>'+
+  (function(t){return '<form class="dform" id="demo-form" novalidate><div class="row"><label>'+esc(t.fName)+'<input name="name" type="text" required autocomplete="name"></label><label>'+esc(t.fCompany)+'<input name="company" type="text" required autocomplete="organization"></label></div><div class="row"><label>'+esc(t.fEmail)+'<input name="email" type="email" required autocomplete="email"></label><label>'+esc(t.fPhone)+'<input name="phone" type="tel" autocomplete="tel"></label></div><label>'+esc(t.fRole)+'<select name="role">'+t.roles.split('|').map(function(r){return '<option>'+esc(r)+'</option>';}).join('')+'</select></label><label>'+esc(t.fMsg)+'<textarea name="msg" placeholder="'+esc(t.fMsgPh)+'"></textarea></label><button class="btn btn-primary" type="submit">'+esc(t.fSend)+'</button><p class="fine">'+esc(t.fFine)+'</p><div class="sent" role="status">'+esc(t.fSent)+'</div></form>';})(T());}
+};
+function sectionHtml(s){
+ var inner=(R[s.type]||function(){return '';})(s);
+ if(s.type==='demo') return '<section class="demo" id="'+esc(s.id)+'"><div class="wrap">'+inner+'</div></section>';
+ return '<section id="'+esc(s.id)+'"><div class="wrap">'+inner+'</div></section>';
+}
+function pageHtml(){
+ var c=C(), t=T(), h=c.hero, on=c.sections.filter(function(s){return s.on;});
+ var langs=Object.keys(state.content);
+ var lsw=langs.length>1?'<div class="lsw" role="group" aria-label="'+esc(t.lang)+'">'+langs.map(function(l){return '<button type="button" data-act="lang" data-lang="'+l+'" aria-pressed="'+(l===lang)+'">'+l.toUpperCase()+'</button>';}).join('')+'</div>':'';
+ var nav=on.filter(function(s){return s.nav;}).map(function(s){return '<li><a href="#'+esc(s.id)+'">'+esc(s.nav)+'</a></li>';}).join('');
+ var hasDemo=on.some(function(s){return s.type==='demo';});
+ return '<header class="nav"><div class="wrap"><a class="brand" href="#top"><i></i>'+esc(state.brand)+'</a><ul>'+nav+'</ul>'+lsw+(hasDemo?'<a class="btn btn-primary btn-sm" href="#demo">'+esc(h.cta1)+'</a>':'')+'</div></header>'+
+ '<section class="hero" id="top"><div class="wrap"><div>'+(h.kicker?'<span class="kicker">'+esc(h.kicker)+'</span>':'')+'<h1>'+esc(h.title)+'</h1><p class="lead">'+fmt(h.lead)+'</p><div class="actions">'+(hasDemo?'<a class="btn btn-primary" href="#demo">'+esc(h.cta1)+'</a>':'')+(h.cta2?'<a class="btn btn-ghost" href="#'+esc((on[0]||{}).id||'top')+'">'+esc(h.cta2)+'</a>':'')+'</div>'+(h.note?'<p class="note">'+fmt(h.note)+'</p>':'')+'</div>'+
+ (img(h.img)?'<div class="shot">'+imgTag(h.img)+'</div>':mockScreen())+'</div></section>'+
+ (lines(c.norms).length?'<div class="strip"><div class="wrap"><span>'+esc(t.norms)+'</span>'+lines(c.norms).map(function(n){return '<b>'+esc(n)+'</b>';}).join('')+'</div></div>':'')+
+ on.map(sectionHtml).join('')+
+ '<footer><div class="wrap"><span>'+esc(state.brand)+', '+esc(t.footer)+'</span><span><a href="mailto:'+esc(state.contact)+'">'+esc(state.contact)+'</a> &nbsp;·&nbsp; <button class="adm" type="button" data-act="open-admin">'+esc(t.admin)+'</button></span></div></footer>';
+}
+function applyColors(){
+ document.documentElement.style.setProperty('--signal-base',state.colors.signal);
+ document.documentElement.style.setProperty('--steel-base',state.colors.steel);
+ document.documentElement.style.setProperty('--step-word',JSON.stringify(T().step));
+}
+var renderT;
+function render(){
+ applyColors();
+ document.getElementById('app').innerHTML=pageHtml();
+ document.title=state.brand;
+}
+function renderSoon(){clearTimeout(renderT);renderT=setTimeout(render,120);}
+
+/* demo form: composes a mailto */
+document.addEventListener('submit',function(e){
+ var f=e.target; if(f.id!=='demo-form')return; e.preventDefault();
+ if(!f.reportValidity())return;
+ var d=new FormData(f);
+ var t=T(); var body=t.mName+': '+d.get('name')+'\n'+t.mCompany+': '+d.get('company')+'\nEmail: '+d.get('email')+'\n'+t.mPhone+': '+(d.get('phone')||'')+'\n'+t.mRole+': '+d.get('role')+'\n\n'+(d.get('msg')||'');
+ f.classList.add('done');
+ window.location.href='mailto:'+state.contact+'?subject='+encodeURIComponent(t.mSubj+' '+state.brand+' '+t.mFrom+' '+d.get('company'))+'&body='+encodeURIComponent(body);
+});
+
+/* ---------- full document for republish ---------- */
+function buildHtml(){
+ var css=document.getElementById('app-style').textContent;
+ var js=document.getElementById('app-script').textContent;
+ var json=JSON.stringify(state).replace(/</g,'\\u003c');
+ return '<!doctype html>\n<html lang="'+esc(state.defaultLang||'ru')+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(state.brand)+'</title>'+FONT+'<style id="app-style">'+css+'</style></head><body>'+
+  '<script id="site-data" type="application/json">'+json+'<\/script><div id="app"></div><aside id="admin" hidden aria-label="Администрирование"></aside>'+
+  '<script id="app-script">'+js+'<\/script></body></html>';
+}
+
+/* ---------- admin ---------- */
+var A=document.getElementById('admin'), tab='sections', open={}, statusMsg='', statusKind='';
+function getPath(p){return p.split('.').reduce(function(o,k){return o==null?o:o[k];},state);}
+function setPath(p,v){var ks=p.split('.'),o=state;for(var i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks[ks.length-1]]=v;}
+function fld(path,label,kind,extra){
+ var v=getPath(path), id='f_'+path.replace(/\./g,'_');
+ if(kind==='textarea')return '<label class="fld"><span>'+esc(label)+'</span><textarea data-path="'+path+'">'+esc(v)+'</textarea></label>';
+ if(kind==='check')return '<label class="fld chk"><input type="checkbox" data-path="'+path+'"'+(v?' checked':'')+'><span>'+esc(label)+'</span></label>';
+ if(kind==='image')return '<label class="fld"><span>'+esc(label)+'</span><select data-path="'+path+'"><option value="">Без изображения</option>'+state.images.map(function(im){return '<option value="'+im.id+'"'+(im.id===v?' selected':'')+'>'+esc(im.name)+'</option>';}).join('')+'</select></label>';
+ if(kind==='select')return '<label class="fld"><span>'+esc(label)+'</span><select data-path="'+path+'">'+extra.split('|').map(function(o){var kv=o.split(':');return '<option value="'+kv[0]+'"'+(kv[0]===v?' selected':'')+'>'+esc(kv[1])+'</option>';}).join('')+'</select></label>';
+ return '<label class="fld"><span>'+esc(label)+'</span><input type="text" data-path="'+path+'" value="'+esc(v)+'"></label>';
+}
+function itemsEditor(si){
+ var s=C().sections[si], T=TYPES[s.type]; if(!T)return '';
+ return '<div class="fld"><span>'+esc(T.label)+'</span></div><div class="items">'+s.items.map(function(it,ii){
+  var name=it.title||it.q||it.caption||it.text||(img(it.img)||{}).name||'Элемент '+(ii+1);
+  var base=L()+'sections.'+si+'.items.'+ii;
+  return '<details class="item"'+(open[base]?' open':'')+' data-key="'+base+'"><summary class="ih"><span class="t">'+esc(name)+'</span>'+
+   '<button class="ic" type="button" data-act="item-up" data-si="'+si+'" data-ii="'+ii+'" title="Выше" aria-label="Выше">↑</button><button class="ic" type="button" data-act="item-down" data-si="'+si+'" data-ii="'+ii+'" title="Ниже" aria-label="Ниже">↓</button><button class="ic x" type="button" data-act="item-del" data-si="'+si+'" data-ii="'+ii+'" title="Удалить" aria-label="Удалить">×</button></summary>'+
+   T.fields.map(function(f){return fld(base+'.'+f[0],f[1],f[2],f[3]);}).join('')+'</details>';
+ }).join('')+'</div><div><button class="ic" type="button" data-act="item-add" data-si="'+si+'">+ Добавить</button></div>';
+}
+function tabSections(){
+ var h='<div class="hint">Вы редактируете версию: <b>'+esc(LANG_NAMES[lang]||lang)+'</b>. Переключить язык можно в шапке панели. Скриншоты общие для всех языков, тексты у каждого языка свои.</div>';
+ h+='<details class="card"'+(open.hero?' open':'')+' data-key="hero"><summary><span class="t">Первый экран</span></summary><div class="cb">'+
+  fld(L()+'hero.kicker','Плашка над заголовком')+fld(L()+'hero.title','Заголовок','textarea')+fld(L()+'hero.lead','Подзаголовок','textarea')+fld(L()+'hero.cta1','Главная кнопка')+fld(L()+'hero.cta2','Вторая кнопка')+fld(L()+'hero.note','Подпись под кнопками')+fld(L()+'hero.img','Скриншот вместо нарисованного экрана','image')+fld(L()+'norms','Полоса нормативов, по строке','textarea')+'</div></details>';
+ h+='<div class="hint">Разделы показываются в том порядке, в каком идут ниже. Выключенный раздел не попадает на страницу, но текст в нём сохраняется.</div>';
+ h+=C().sections.map(function(s,si){
+  var base=L()+'sections.'+si;
+  return '<details class="card"'+(open[base]?' open':'')+' data-key="'+base+'"><summary><input type="checkbox" data-path="'+base+'.on"'+(s.on?' checked':'')+' title="Показывать раздел" aria-label="Показывать раздел"><span class="t">'+esc(s.title||s.nav||TYPE_NAMES[s.type]||s.type)+' <span class="off">'+esc(TYPE_NAMES[s.type]||'')+'</span></span>'+
+   '<button class="ic" type="button" data-act="sec-up" data-si="'+si+'" title="Выше" aria-label="Выше">↑</button><button class="ic" type="button" data-act="sec-down" data-si="'+si+'" title="Ниже" aria-label="Ниже">↓</button></summary><div class="cb">'+
+   fld(base+'.nav','Пункт в меню, пусто = не показывать')+fld(base+'.title','Заголовок раздела')+fld(base+'.lead','Подзаголовок','textarea')+itemsEditor(si)+'</div></details>';
+ }).join('');
+ h+='<div class="fld"><span>Добавить раздел</span><select id="add-sec"><option value="">Выберите тип</option>'+Object.keys(TYPES).map(function(t){return '<option value="'+t+'">'+esc(TYPE_NAMES[t])+'</option>';}).join('')+'</select></div><div><button class="ic" type="button" data-act="sec-add">+ Добавить раздел</button> <button class="ic x" type="button" data-act="sec-del-last" title="Удалить последний раздел">Удалить последний раздел</button></div>';
+ return h;
+}
+function usedIn(id){
+ var u=[];
+ Object.keys(state.content).forEach(function(k){var c=state.content[k]; if(c.hero.img===id&&u.indexOf('первый экран')<0)u.push('первый экран');
+  c.sections.forEach(function(s){s.items.forEach(function(it){if(it.img===id){var n=s.type==='gallery'?'галерея':(it.title||s.title);if(u.indexOf(n)<0)u.push(n);}});});});
+ return u;
+}
+function tabImages(){
+ var total=state.images.reduce(function(a,im){return a+im.src.length;},0);
+ return '<label class="drop" id="drop"><input type="file" accept="image/*" multiple id="file-in">Перетащите скриншоты сюда или нажмите, чтобы выбрать<br><span class="hint">PNG или JPEG. Картинки сжимаются до 1600 px по ширине и хранятся внутри страницы.</span></label>'+
+  '<div class="hint">Загружено: '+state.images.length+', примерно '+(total/1024/1024).toFixed(1)+' МБ. Ограничение страницы около 16 МБ.</div>'+
+  '<div class="imgs">'+state.images.map(function(im,i){var u=usedIn(im.id);return '<div class="img"><img src="'+im.src+'" alt=""><div><div class="fld"><input type="text" data-path="images.'+i+'.name" value="'+esc(im.name)+'" aria-label="Название"></div><div class="m">'+im.w+'×'+im.h+', '+(im.src.length/1024).toFixed(0)+' КБ</div><div class="u">'+(u.length?'Используется: '+esc(u.join(', ')):'Не используется')+'</div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><button class="ic" type="button" data-act="img-hero" data-i="'+i+'">На первый экран</button><button class="ic" type="button" data-act="img-gal" data-i="'+i+'">В галерею</button><button class="ic x" type="button" data-act="img-del" data-i="'+i+'">Удалить</button></div></div></div>';}).join('')+'</div>';
+}
+function tabStyle(){
+ return fld('brand','Название')+fld('contact','Email для заявок с формы','text')+fld('defaultLang','Язык по умолчанию для новых посетителей','select','ru:Русский|en:English')+
+  '<div class="fld"><span>Цвета</span><div class="colors"><label><input type="color" data-path="colors.signal" value="'+esc(state.colors.signal)+'">Кнопки и акцент</label><label><input type="color" data-path="colors.steel" value="'+esc(state.colors.steel)+'">Структура и ссылки</label></div></div>'+
+  '<div class="hint">Тёмная тема подстраивается автоматически: цвета осветляются, чтобы оставаться читаемыми.</div>'+
+  '<div><button class="ic" type="button" data-act="reset-colors">Вернуть цвета по умолчанию</button></div>';
+}
+function renderAdmin(){
+ if(A.hidden)return;
+ var dirty=JSON.stringify(state)!==pristine;
+ A.innerHTML='<div class="ah"><b>Администрирование</b><select id="adm-lang" aria-label="Язык" style="font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink)">'+Object.keys(state.content).map(function(l){return '<option value="'+l+'"'+(l===lang?' selected':'')+'>'+esc(LANG_NAMES[l]||l)+'</option>';}).join('')+'</select><button class="ic" type="button" data-act="close-admin" aria-label="Закрыть">Закрыть</button></div>'+
+  '<div class="tabs" role="tablist"><button role="tab" aria-selected="'+(tab==='sections')+'" data-tab="sections">Разделы</button><button role="tab" aria-selected="'+(tab==='images')+'" data-tab="images">Скриншоты</button><button role="tab" aria-selected="'+(tab==='style')+'" data-tab="style">Оформление</button></div>'+
+  '<div class="abody">'+(tab==='sections'?tabSections():tab==='images'?tabImages():tabStyle())+'</div>'+
+  '<div class="af"><div class="st '+statusKind+'">'+esc(statusMsg||(dirty?'Есть несохранённые изменения. Они видны только вам, пока не опубликованы.':'Изменений нет.'))+'</div><div class="bt"><button class="btn btn-primary btn-sm" type="button" data-act="save"'+(dirty?'':' disabled')+'>Опубликовать</button><button class="btn btn-ghost btn-sm" type="button" data-act="discard"'+(dirty?'':' disabled')+'>Отменить изменения</button><a class="btn btn-ghost btn-sm" id="dl" href="#" download="stroykabuild-landing.html" hidden>Скачать HTML</a></div></div>';
+ bindDrop();
+ var ls=document.getElementById('adm-lang'); if(ls)ls.addEventListener('change',function(){setLang(ls.value);});
+}
+function setStatus(m,k){statusMsg=m||'';statusKind=k||'';var el=A.querySelector('.st');if(el){el.textContent=m;el.className='st '+(k||'');}}
+function openAdmin(){A.hidden=false;renderAdmin();}
+function closeAdmin(){A.hidden=true;}
+
+/* image intake */
+function bindDrop(){
+ var d=document.getElementById('drop'),inp=document.getElementById('file-in'); if(!d)return;
+ inp.addEventListener('change',function(){addFiles(inp.files);});
+ ['dragenter','dragover'].forEach(function(ev){d.addEventListener(ev,function(e){e.preventDefault();d.classList.add('over');});});
+ ['dragleave','drop'].forEach(function(ev){d.addEventListener(ev,function(e){e.preventDefault();d.classList.remove('over');});});
+ d.addEventListener('drop',function(e){addFiles(e.dataTransfer.files);});
+}
+function shrink(file){
+ return new Promise(function(res,rej){
+  var url=URL.createObjectURL(file), im=new Image();
+  im.onload=function(){
+   var max=1600,k=Math.min(1,max/im.width),c=document.createElement('canvas');
+   c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+   var cx=c.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,c.width,c.height);cx.drawImage(im,0,0,c.width,c.height);
+   var png=file.type==='image/png'&&file.size<400000?c.toDataURL('image/png'):null;
+   var jpg=c.toDataURL('image/jpeg',.84);
+   URL.revokeObjectURL(url);
+   res({src:(png&&png.length<jpg.length)?png:jpg,w:c.width,h:c.height});
+  };
+  im.onerror=function(){URL.revokeObjectURL(url);rej(new Error('bad image'));};
+  im.src=url;
+ });
+}
+function addFiles(files){
+ var list=Array.prototype.slice.call(files||[]).filter(function(f){return /^image\//.test(f.type);});
+ if(!list.length)return;
+ setStatus('Обрабатываю '+list.length+' файл(ов)…');
+ Promise.all(list.map(function(f){return shrink(f).then(function(r){state.images.push({id:'im'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:f.name.replace(/\.[^.]+$/,''),src:r.src,w:r.w,h:r.h});}).catch(function(){});})).then(function(){setStatus('');renderAdmin();render();});
+}
+
+/* save */
+function save(){
+ var html=buildHtml();
+ if(html.length>15.5*1024*1024){setStatus('Страница больше 16 МБ, удалите часть скриншотов.','err');return;}
+ setStatus('Публикую…');
+ var u=(window.claude&&typeof window.claude.use==='function')?window.claude.use('artifact'):Promise.resolve(null);
+ u.then(function(art){
+  if(!art){
+   var dl=document.getElementById('dl');
+   if(dl){dl.hidden=false;dl.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));}
+   setStatus('Публикация работает только в открытой на claude.ai версии страницы. Здесь можно скачать HTML с изменениями.','err');
+   return;
+  }
+  return art.publish(html).then(function(){
+   pristine=JSON.stringify(state);
+   setStatus('Опубликовано. Страница обновится у всех, кто её открыл.','ok');
+  }).catch(function(e){
+   var c=e&&e.code;
+   if(c==='not_writer'||c==='not_granted'||c==='consent_required')setStatus('У вас нет прав на редактирование этой страницы. Попросите владельца дать доступ на редактирование.','err');
+   else if(c==='conflict')setStatus('Кто‑то опубликовал новую версию раньше. Страница перезагрузится, внесите изменения ещё раз.','err');
+   else if(c==='too_large')setStatus('Страница слишком большая. Удалите часть скриншотов и попробуйте снова.','err');
+   else if(c==='rate_limited')setStatus('Слишком частые публикации. Подождите минуту.','err');
+   else setStatus('Не удалось опубликовать: '+((e&&e.message)||c||'ошибка')+'. Попробуйте ещё раз.','err');
+  });
+ });
+}
+
+/* events */
+A.addEventListener('input',function(e){
+ var t=e.target, p=t.getAttribute('data-path'); if(!p)return;
+ setPath(p, t.type==='checkbox'?t.checked:t.value);
+ if(/\.sections\.\d+\.on$/.test(p)){renderAdmin();}
+ statusMsg='';
+ var st=A.querySelector('.st'); if(st){st.className='st';st.textContent='Есть несохранённые изменения. Они видны только вам, пока не опубликованы.';}
+ A.querySelectorAll('[data-act="save"],[data-act="discard"]').forEach(function(b){b.disabled=false;});
+ renderSoon();
+});
+A.addEventListener('toggle',function(e){var d=e.target;if(d.dataset&&d.dataset.key)open[d.dataset.key]=d.open;},true);
+function swap(arr,i,j){if(j<0||j>=arr.length)return;var t=arr[i];arr[i]=arr[j];arr[j]=t;}
+document.addEventListener('click',function(e){
+ var b=e.target.closest('[data-act],[data-tab]'); if(!b)return;
+ if(b.dataset.tab){tab=b.dataset.tab;renderAdmin();return;}
+ var act=b.dataset.act, si=+b.dataset.si, ii=+b.dataset.ii, i=+b.dataset.i, s;
+ switch(act){
+  case 'open-admin': openAdmin(); return;
+  case 'close-admin': closeAdmin(); return;
+  case 'save': save(); return;
+  case 'discard': state=JSON.parse(pristine); render(); renderAdmin(); return;
+  case 'lang': setLang(b.dataset.lang); return;
+  case 'sec-up': swap(C().sections,si,si-1); break;
+  case 'sec-down': swap(C().sections,si,si+1); break;
+  case 'sec-add': var sel=document.getElementById('add-sec'), t=sel&&sel.value; if(!t)return; C().sections.push({id:t+'-'+Date.now().toString(36),type:t,on:true,nav:'',title:TYPE_NAMES[t],lead:'',items:[JSON.parse(JSON.stringify(TYPES[t].blank))]}); break;
+  case 'sec-del-last': s=C().sections; if(s.length&&confirm('Удалить раздел «'+(s[s.length-1].title||TYPE_NAMES[s[s.length-1].type])+'»?'))s.pop(); break;
+  case 'item-up': swap(C().sections[si].items,ii,ii-1); break;
+  case 'item-down': swap(C().sections[si].items,ii,ii+1); break;
+  case 'item-del': C().sections[si].items.splice(ii,1); break;
+  case 'item-add': s=C().sections[si]; s.items.push(JSON.parse(JSON.stringify(TYPES[s.type].blank))); open[L()+'sections.'+si+'.items.'+(s.items.length-1)]=true; break;
+  case 'img-hero': (function(id){Object.keys(state.content).forEach(function(k){state.content[k].hero.img=id;});})(state.images[i].id); break;
+  case 'img-gal': (function(im){Object.keys(state.content).forEach(function(k){var c=state.content[k]; var g=c.sections.filter(function(x){return x.type==='gallery';})[0]; if(!g){g=JSON.parse(JSON.stringify((k==='en'?EN:RU).sections.filter(function(x){return x.type==='gallery';})[0])); g.items=[]; c.sections.push(g);} g.on=true; g.items.push({img:im.id,caption:im.name});});})(state.images[i]); break;
+  case 'img-del': var id=state.images[i].id; if(!confirm('Удалить изображение «'+state.images[i].name+'»?'))return; state.images.splice(i,1); Object.keys(state.content).forEach(function(k){var c=state.content[k]; if(c.hero.img===id)c.hero.img=''; c.sections.forEach(function(x){x.items.forEach(function(it){if(it.img===id)it.img='';});});}); break;
+  case 'reset-colors': state.colors={signal:DEFAULT.colors.signal,steel:DEFAULT.colors.steel}; break;
+  default: return;
+ }
+ statusMsg=''; render(); renderAdmin();
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!A.hidden)closeAdmin();});
+
+load(); render();
+if(location.hash==='#admin')openAdmin();
+})();
+</script>
+
+</body></html>
